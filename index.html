@@ -3,15 +3,14 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>Lookismdle - Pro Edition</title>
+<title>Lookismdle - Streak Edition</title>
 <style>
 :root {
   --bg: #0b0e11;
   --surface: #1a1d21;
   --primary: #3498db;
   --correct: #27ae60;
-  --partial: #f1c40f;
-  --wrong: #c0392b; /* Changed to Red */
+  --wrong: #c0392b; /* Pure Red for incorrect */
   --danger: #e74c3c;
   --text: #ffffff;
   --text-dim: #8b97a2;
@@ -26,8 +25,19 @@ body {
   padding: 20px;
 }
 
+.streak-container {
+  font-size: 1.2rem;
+  font-weight: 800;
+  color: var(--partial);
+  margin-bottom: 10px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+#streakCount { color: #f1c40f; font-size: 1.5rem; }
+
 h1 { 
-  margin-bottom: 5px; 
+  margin: 5px 0; 
   font-size: 2.5rem;
   font-weight: 900;
   text-transform: uppercase; 
@@ -37,7 +47,7 @@ h1 {
   -webkit-text-fill-color: transparent;
 }
 
-.sub-header { color: var(--text-dim); margin-bottom: 30px; font-size: 0.9rem; }
+.sub-header { color: var(--text-dim); margin-bottom: 30px; font-size: 0.8rem; }
 
 .controls {
   display: flex;
@@ -65,7 +75,6 @@ input#charSearch {
   color: white;
   outline: none;
   transition: all 0.3s ease;
-  box-shadow: 0 4px 15px rgba(0,0,0,0.3);
 }
 
 #suggestions {
@@ -76,10 +85,9 @@ input#charSearch {
   background: var(--surface);
   border: 1px solid #2c3136;
   z-index: 1000;
-  max-height: 300px;
+  max-height: 250px;
   overflow-y: auto;
   border-radius: 8px;
-  margin-top: 5px;
   display: none;
 }
 
@@ -105,37 +113,32 @@ input#charSearch {
 
 #guessBtn { background: var(--primary); color: white; }
 #giveUpBtn { background: var(--danger); color: white; }
-#nextBtn { background: var(--correct); color: white; display: none; width: 200px; }
+#nextBtn { background: var(--correct); color: white; display: none; width: 220px; }
 
 #messageArea { margin-top: 15px; font-weight: bold; min-height: 24px; }
 
 table {
   margin: 20px auto;
   border-collapse: separate;
-  border-spacing: 8px;
+  border-spacing: 5px;
   width: 100%;
-  max-width: 1300px;
+  max-width: 1400px;
 }
 
-th { 
-  color: var(--text-dim);
-  text-transform: uppercase;
-  font-size: 0.75rem;
-  padding: 10px;
-}
+th { color: var(--text-dim); text-transform: uppercase; font-size: 0.65rem; padding: 8px; }
 
 td {
-  padding: 18px 10px;
-  font-size: 13px;
+  padding: 15px 5px;
+  font-size: 11px;
   font-weight: 700;
-  border-radius: 8px;
-  min-width: 100px;
-  box-shadow: inset 0 -3px 0 rgba(0,0,0,0.2);
+  border-radius: 6px;
+  min-width: 75px;
+  box-shadow: inset 0 -3px 0 rgba(0,0,0,0.1);
+  color: white;
 }
 
-.green { background: var(--correct); }
-.red { background: var(--wrong); }
-.yellow { background: var(--partial); color: #111; }
+.green { background: var(--correct) !important; }
+.red { background: var(--wrong) !important; }
 
 @keyframes reveal {
   0% { transform: perspective(400px) rotateX(90deg); opacity: 0; }
@@ -143,18 +146,19 @@ td {
 }
 
 tbody tr { animation: reveal 0.5s ease forwards; }
-.arrow { font-size: 1.2rem; vertical-align: middle; margin-left: 4px; }
+.arrow { font-size: 1.1rem; vertical-align: middle; margin-left: 2px; }
 </style>
 </head>
 
 <body>
 
+<div class="streak-container">🔥 STREAK: <span id="streakCount">0</span></div>
 <h1>LOOKISMDLE</h1>
-<div class="sub-header">Official Wiki Heights & Ages | Red = Incorrect</div>
+<div class="sub-header">All categories Red if wrong | Arrows show higher/lower</div>
 
 <div class="controls">
     <div class="search-container">
-      <input type="text" id="charSearch" placeholder="Type English or Korean name..." autocomplete="off">
+      <input type="text" id="charSearch" placeholder="Type character name..." autocomplete="off">
       <div id="suggestions"></div>
       <button id="guessBtn" class="btn" onclick="makeGuess()">GUESS</button>
     </div>
@@ -173,6 +177,7 @@ tbody tr { animation: reveal 0.5s ease forwards; }
       <th>Gender</th>
       <th>Gen</th>
       <th>Height</th>
+      <th>Hometown</th>
       <th>Affiliation</th>
       <th>Style</th>
       <th>Hair</th>
@@ -184,59 +189,44 @@ tbody tr { animation: reveal 0.5s ease forwards; }
 
 <script>
 const characters = [
-  // Generation 2
-  {name:"Daniel Park / Park Hyung Suk", gender:"Male", generation:"Gen 2", height:181, affiliation:"Allied", style:"Copy", hair:"Black", age:19},
-  {name:"Zack Lee / Lee Jin Sung", gender:"Male", generation:"Gen 2", height:185, affiliation:"Allied", style:"Boxing", hair:"Black", age:19},
-  {name:"Vasco / Lee Eun Tae", gender:"Male", generation:"Gen 2", height:183, affiliation:"Burn Knuckles", style:"Muay Thai", hair:"Black", age:19},
-  {name:"Jay Hong / Hong Jae Yeol", gender:"Male", generation:"Gen 2", height:182, affiliation:"Allied", style:"Systema", hair:"Blonde", age:19},
-  {name:"Vin Jin / Jin Ho Bin", gender:"Male", generation:"Gen 2", height:180, affiliation:"Allied", style:"Ssireum", hair:"Black", age:19},
-  {name:"Jake Kim / Kim Gi Myeong", gender:"Male", generation:"Gen 2", height:194, affiliation:"Big Deal", style:"MMA", hair:"Black", age:19},
-  {name:"Jerry Kwon / Kwon Ji Tae", gender:"Male", generation:"Gen 2", height:215, affiliation:"Big Deal", style:"Boxing", hair:"Bald", age:19},
-  {name:"Johan Seong / Seong Yo Han", gender:"Male", generation:"Gen 2", height:179, affiliation:"None", style:"Copy", hair:"Brown", age:19},
-  {name:"Eli Jang / Jang Hyun", gender:"Male", generation:"Gen 2", height:182, affiliation:"Hostel", style:"Wildness", hair:"Black", age:19},
-  {name:"Warren Chae / Chae Won Seok", gender:"Male", generation:"Gen 2", height:187, affiliation:"Hostel", style:"CQC", hair:"Black", age:20},
-  {name:"Samuel Seo / Seo Seong Eun", gender:"Male", generation:"Gen 2", height:195, affiliation:"Workers", style:"Brawling", hair:"Black", age:20},
-  {name:"Logan Lee / Lee Tae Sung", gender:"Male", generation:"Gen 2", height:203, affiliation:"Workers", style:"Jiu-Jitsu", hair:"Black", age:19},
-  {name:"Yuseong / Yoo Sung", gender:"Male", generation:"Gen 2", height:173, affiliation:"Workers", style:"Instinct", hair:"Black", age:19},
-  {name:"Mandeok Bang / Bang Man Deok", gender:"Male", generation:"Gen 2", height:210, affiliation:"Workers", style:"Capoeira", hair:"Black", age:20},
-  {name:"Ryuhei Kuroda / Kuroda Ryuhei", gender:"Male", generation:"Gen 2", height:184, affiliation:"Workers", style:"Kagiroi", hair:"Blonde", age:20},
-
-  // Generation 1
-  {name:"James Lee / Lee Ji Hoon", gender:"Male", generation:"Gen 1", height:188, affiliation:"HNH Group", style:"IA", hair:"Pink", age:23},
-  {name:"Gun Park / Jong Gun", gender:"Male", generation:"Gen 1", height:190, affiliation:"HNH Group", style:"Kyokushin", hair:"Black", age:20},
-  {name:"Goo Kim / Joon Goo", gender:"Male", generation:"Gen 1", height:190, affiliation:"Secret Friends", style:"Weapons", hair:"Blonde", age:20},
-  {name:"Sinu Han / Han Shin Woo", gender:"Male", generation:"Gen 1", height:184, affiliation:"Big Deal", style:"IA", hair:"Black", age:22},
-  {name:"Jichang Kwak / Kwak Ji Chang", gender:"Male", generation:"Gen 1", height:192, affiliation:"Seoul", style:"Hand Chop", hair:"Black", age:24},
-  {name:"Taesoo Ma / Ma Tae Soo", gender:"Male", generation:"Gen 1", height:191, affiliation:"Ansan", style:"Punching", hair:"Red", age:24},
-  {name:"Gongseob Ji / Ji Gong Seob", gender:"Male", generation:"Gen 1", height:188, affiliation:"Daegu", style:"Boxing", hair:"Bald", age:24},
-
-  // Generation 0
-  {name:"Tom Lee / Lee Do Gyu", gender:"Male", generation:"Gen 0", height:213, affiliation:"WTJC", style:"Wildness", hair:"Gray", age:50},
-  {name:"Manager Kim / Kim Bu Jang", gender:"Male", generation:"Gen 0", height:178, affiliation:"WTJC", style:"CQC", hair:"Black", age:48},
-  {name:"Gapryong Kim / Kim Gap Ryong", gender:"Male", generation:"Gen 0", height:189, affiliation:"Fist Gang", style:"Overcoming", hair:"Black", age:48},
-  {name:"Jinyoung Park / Park Jin Young", gender:"Male", generation:"Gen 0", height:191, affiliation:"Workers", style:"Copy", hair:"Black", age:50},
-
-  // Others
-  {name:"Crystal Choi / Choi Soo Jung", gender:"Female", generation:"Gen 2", height:171, affiliation:"HNH Group", style:"Boxing", hair:"Black", age:19},
-  {name:"Mary Kim / Kim Mi Jin", gender:"Female", generation:"Gen 2", height:165, affiliation:"None", style:"Judo", hair:"Blonde", age:19}
+  {name:"Daniel Park / Park Hyung Suk", gender:"Male", generation:"Gen 2", height:181, hometown:"Seoul", affiliation:"Allied", style:"Copy", hair:"Black", age:19},
+  {name:"Zack Lee / Lee Jin Sung", gender:"Male", generation:"Gen 2", height:185, hometown:"Seoul", affiliation:"Allied", style:"Boxing", hair:"Black", age:19},
+  {name:"Vasco / Lee Eun Tae", gender:"Male", generation:"Gen 2", height:183, hometown:"Seoul", affiliation:"Burn Knuckles", style:"Muay Thai", hair:"Black", age:19},
+  {name:"Jay Hong / Hong Jae Yeol", gender:"Male", generation:"Gen 2", height:182, hometown:"Seoul", affiliation:"Allied", style:"Systema", hair:"Blonde", age:19},
+  {name:"Vin Jin / Jin Ho Bin", gender:"Male", generation:"Gen 2", height:180, hometown:"Cheonliang", affiliation:"Allied", style:"Ssireum", hair:"Black", age:19},
+  {name:"Jake Kim / Kim Gi Myeong", gender:"Male", generation:"Gen 2", height:194, hometown:"Seoul", affiliation:"Big Deal", style:"MMA", hair:"Black", age:19},
+  {name:"Jerry Kwon / Kwon Ji Tae", gender:"Male", generation:"Gen 2", height:215, hometown:"Seoul", affiliation:"Big Deal", style:"Boxing", hair:"Bald", age:19},
+  {name:"Johan Seong / Seong Yo Han", gender:"Male", generation:"Gen 2", height:179, hometown:"Seoul", affiliation:"None", style:"Copy", hair:"Brown", age:19},
+  {name:"Eli Jang / Jang Hyun", gender:"Male", generation:"Gen 2", height:182, hometown:"Seoul", affiliation:"Hostel", style:"Wildness", hair:"Black", age:19},
+  {name:"Samuel Seo / Seo Seong Eun", gender:"Male", generation:"Gen 2", height:195, hometown:"Seoul", affiliation:"Workers", style:"Brawling", hair:"Black", age:20},
+  {name:"Logan Lee / Lee Tae Sung", gender:"Male", generation:"Gen 2", height:203, hometown:"Seoul", affiliation:"Workers", style:"Jiu-Jitsu", hair:"Black", age:19},
+  {name:"Hudson Ahn / Ahn Hyun Sung", gender:"Male", generation:"Gen 2", height:178, hometown:"Ansan", affiliation:"Allied", style:"Punching", hair:"Blonde", age:20},
+  {name:"James Lee / Lee Ji Hoon", gender:"Male", generation:"Gen 1", height:188, hometown:"Seoul", affiliation:"HNH Group", style:"IA", hair:"Pink", age:23},
+  {name:"Gun Park / Jong Gun", gender:"Male", generation:"Gen 1", height:190, hometown:"Tokyo", affiliation:"HNH Group", style:"Kyokushin", hair:"Black", age:20},
+  {name:"Goo Kim / Joon Goo", gender:"Male", generation:"Gen 1", height:190, hometown:"Seoul", affiliation:"Secret Friends", style:"Weapons", hair:"Blonde", age:20},
+  {name:"Jichang Kwak / Kwak Ji Chang", gender:"Male", generation:"Gen 1", height:192, hometown:"Seoul", affiliation:"Chungcheong", style:"Hand Chop", hair:"Black", age:24},
+  {name:"Taesoo Ma / Ma Tae Soo", gender:"Male", generation:"Gen 1", height:191, hometown:"Ansan", affiliation:"Ansan", style:"Punching", hair:"Red", age:24},
+  {name:"Tom Lee / Lee Do Gyu", gender:"Male", generation:"Gen 0", height:213, hometown:"Seoul", affiliation:"WTJC", style:"Wildness", hair:"Gray", age:50},
+  {name:"Manager Kim / Kim Bu Jang", gender:"Male", generation:"Gen 0", height:178, hometown:"Namhae", affiliation:"WTJC", style:"CQC", hair:"Black", age:48},
+  {name:"Gapryong Kim / Kim Gap Ryong", gender:"Male", generation:"Gen 0", height:189, hometown:"Seoul", affiliation:"Fist Gang", style:"Overcoming", hair:"Black", age:48}
 ];
+
+let streak = localStorage.getItem("lookism_streak") || 0;
+document.getElementById("streakCount").textContent = streak;
 
 let answer = characters[Math.floor(Math.random() * characters.length)];
 let gameActive = true;
+let hasWon = false;
 
 const input = document.getElementById("charSearch");
 const suggestions = document.getElementById("suggestions");
 const messageArea = document.getElementById("messageArea");
-const nextBtn = document.getElementById("nextBtn");
-const giveUpBtn = document.getElementById("giveUpBtn");
-const guessBtn = document.getElementById("guessBtn");
 
 input.addEventListener("input", function() {
   if (!gameActive) return;
   const val = this.value.toLowerCase();
   suggestions.innerHTML = "";
   if (!val) { suggestions.style.display = "none"; return; }
-
   const filtered = characters.filter(c => c.name.toLowerCase().includes(val));
   filtered.forEach(c => {
     const div = document.createElement("div");
@@ -252,7 +242,6 @@ function makeGuess() {
   if (!gameActive) return;
   const inputVal = input.value.trim();
   const g = characters.find(c => c.name.toLowerCase() === inputVal.toLowerCase());
-
   if (!g) return;
 
   const tableBody = document.getElementById("tableBody");
@@ -262,6 +251,7 @@ function makeGuess() {
   addCell(row, g.gender, answer.gender);
   addCell(row, g.generation, answer.generation);
   addComparisonCell(row, g.height, answer.height, "cm");
+  addCell(row, g.hometown, answer.hometown);
   addCell(row, g.affiliation, answer.affiliation);
   addCell(row, g.style, answer.style);
   addCell(row, g.hair, answer.hair);
@@ -275,28 +265,39 @@ function giveUp() { if (gameActive) endGame(false); }
 
 function endGame(won) {
     gameActive = false;
+    hasWon = won;
     input.disabled = true;
-    guessBtn.disabled = true;
-    giveUpBtn.style.display = "none";
-    nextBtn.style.display = "inline-block";
-    messageArea.innerHTML = won ? 
-        `<span style="color: var(--correct)">🏆 CORRECT! THE CHARACTER WAS ${answer.name}</span>` : 
-        `<span style="color: var(--danger)">GAVE UP! THE ANSWER WAS: ${answer.name}</span>`;
+    document.getElementById("guessBtn").disabled = true;
+    document.getElementById("giveUpBtn").style.display = "none";
+    document.getElementById("nextBtn").style.display = "inline-block";
+    
+    if (won) {
+        messageArea.innerHTML = `<span style="color: var(--correct)">🏆 CORRECT! THE CHARACTER WAS ${answer.name}</span>`;
+    } else {
+        localStorage.setItem("lookism_streak", 0);
+        messageArea.innerHTML = `<span style="color: var(--danger)">STREAK RESET! THE ANSWER WAS: ${answer.name}</span>`;
+    }
 }
 
-function nextRound() { location.reload(); }
+function nextRound() {
+    if (hasWon) {
+        streak++;
+        localStorage.setItem("lookism_streak", streak);
+    }
+    location.reload();
+}
 
 function addCell(row, value, targetValue) {
   const cell = row.insertCell();
   cell.textContent = value;
-  cell.className = (value === targetValue) ? "green" : "red"; // Red if wrong
+  cell.className = (value === targetValue) ? "green" : "red";
 }
 
 function addComparisonCell(row, value, targetValue, unit) {
   const cell = row.insertCell();
   let arrow = value < targetValue ? ' <span class="arrow">↑</span>' : (value > targetValue ? ' <span class="arrow">↓</span>' : "");
   cell.innerHTML = value + unit + arrow;
-  cell.className = (value === targetValue) ? "green" : "yellow";
+  cell.className = (value === targetValue) ? "green" : "red"; // Now Red if wrong
 }
 </script>
 </body>
