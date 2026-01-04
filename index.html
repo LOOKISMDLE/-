@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -12,6 +11,7 @@
   --correct: #27ae60;
   --partial: #f1c40f;
   --wrong: #34495e;
+  --danger: #e74c3c;
   --text: #ffffff;
   --text-dim: #8b97a2;
 }
@@ -38,13 +38,20 @@ h1 {
 
 .sub-header { color: var(--text-dim); margin-bottom: 30px; font-size: 0.9rem; }
 
+.controls {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 15px;
+  margin-bottom: 40px;
+}
+
 .search-container {
   position: relative;
   display: inline-flex;
   width: 100%;
   max-width: 600px;
   gap: 10px;
-  margin-bottom: 40px;
 }
 
 input#charSearch {
@@ -88,20 +95,30 @@ input#charSearch:focus { border-color: var(--primary); box-shadow: 0 0 10px rgba
 
 .suggestion-item:hover { background: #2c3136; color: var(--primary); }
 
-button#guessBtn {
+.btn {
   padding: 0 25px;
   font-size: 14px;
-  background: var(--primary);
-  color: white;
   border: none;
   border-radius: 12px;
   cursor: pointer;
   font-weight: 800;
   text-transform: uppercase;
   transition: transform 0.1s, background 0.3s;
+  height: 50px;
 }
 
-button#guessBtn:active { transform: scale(0.95); }
+#guessBtn { background: var(--primary); color: white; }
+#giveUpBtn { background: var(--danger); color: white; }
+#nextBtn { background: var(--correct); color: white; display: none; width: 200px; }
+
+.btn:active { transform: scale(0.95); }
+.btn:disabled { background: #444; cursor: not-allowed; }
+
+#messageArea {
+    margin-top: 15px;
+    font-weight: bold;
+    min-height: 24px;
+}
 
 table {
   margin: 20px auto;
@@ -148,10 +165,18 @@ tbody tr { animation: reveal 0.5s ease forwards; }
 <h1>LOOKISMDLE</h1>
 <div class="sub-header">Guess the character using English or Korean names</div>
 
-<div class="search-container">
-  <input type="text" id="charSearch" placeholder="Type a character (e.g. Daniel Park or Park Hyung Suk)..." autocomplete="off">
-  <div id="suggestions"></div>
-  <button id="guessBtn" onclick="makeGuess()">GUESS</button>
+<div class="controls">
+    <div class="search-container">
+      <input type="text" id="charSearch" placeholder="Type a character..." autocomplete="off">
+      <div id="suggestions"></div>
+      <button id="guessBtn" class="btn" onclick="makeGuess()">GUESS</button>
+    </div>
+    
+    <div>
+        <button id="giveUpBtn" class="btn" onclick="giveUp()">Give Up</button>
+        <button id="nextBtn" class="btn" onclick="nextRound()">Next Character</button>
+    </div>
+    <div id="messageArea"></div>
 </div>
 
 <table id="resultTable">
@@ -172,7 +197,6 @@ tbody tr { animation: reveal 0.5s ease forwards; }
 
 <script>
 const characters = [
-  // Generation 2
   {name:"Daniel Park / Park Hyung Suk", gender:"Male", generation:"Gen 2", height:181, affiliation:"Allied", style:"Copy", hair:"Black", age:19},
   {name:"Zack Lee / Lee Jin Sung", gender:"Male", generation:"Gen 2", height:185, affiliation:"Allied", style:"Boxing", hair:"Black", age:19},
   {name:"Vasco / Lee Eun Tae", gender:"Male", generation:"Gen 2", height:183, affiliation:"Burn Knuckles", style:"Muay Thai", hair:"Black", age:19},
@@ -184,29 +208,30 @@ const characters = [
   {name:"Eli Jang / Jang Hyun", gender:"Male", generation:"Gen 2", height:182, affiliation:"Hostel", style:"Wildness", hair:"Black", age:19},
   {name:"Samuel Seo / Seo Seong Eun", gender:"Male", generation:"Gen 2", height:195, affiliation:"Workers", style:"Brawling", hair:"Black", age:20},
   {name:"Logan Lee / Lee Tae Sung", gender:"Male", generation:"Gen 2", height:203, affiliation:"Workers", style:"Jiu-Jitsu", hair:"Black", age:19},
-  
-  // Generation 1
   {name:"James Lee / Lee Ji Hoon", gender:"Male", generation:"Gen 1", height:188, affiliation:"HNH Group", style:"IA", hair:"Pink", age:23},
   {name:"Gun Park / Jong Gun", gender:"Male", generation:"Gen 1", height:190, affiliation:"HNH Group", style:"Kyokushin", hair:"Black", age:20},
   {name:"Goo Kim / Joon Goo", gender:"Male", generation:"Gen 1", height:190, affiliation:"Secret Friends", style:"Weapons", hair:"Blonde", age:20},
   {name:"Sinu Han / Han Shin Woo", gender:"Male", generation:"Gen 1", height:184, affiliation:"Big Deal", style:"IA", hair:"Black", age:22},
   {name:"Jichang Kwak / Kwak Ji Chang", gender:"Male", generation:"Gen 1", height:192, affiliation:"Seoul", style:"Hand Chop", hair:"Black", age:24},
-
-  // Generation 0
   {name:"Tom Lee / Lee Do Gyu", gender:"Male", generation:"Gen 0", height:213, affiliation:"WTJC", style:"Wildness", hair:"Gray", age:50},
   {name:"Manager Kim / Kim Bu Jang", gender:"Male", generation:"Gen 0", height:178, affiliation:"WTJC", style:"CQC", hair:"Black", age:48},
   {name:"Gapryong Kim / Kim Gap Ryong", gender:"Male", generation:"Gen 0", height:189, affiliation:"Fist Gang", style:"Overcoming", hair:"Black", age:48},
-
-  // Females
   {name:"Crystal Choi / Choi Soo Jung", gender:"Female", generation:"Gen 2", height:171, affiliation:"HNH Group", style:"Boxing", hair:"Black", age:19},
   {name:"Mary Kim / Kim Mi Jin", gender:"Female", generation:"Gen 2", height:165, affiliation:"None", style:"Judo", hair:"Blonde", age:19}
 ];
 
 let answer = characters[Math.floor(Math.random() * characters.length)];
+let gameActive = true;
+
 const input = document.getElementById("charSearch");
 const suggestions = document.getElementById("suggestions");
+const messageArea = document.getElementById("messageArea");
+const nextBtn = document.getElementById("nextBtn");
+const giveUpBtn = document.getElementById("giveUpBtn");
+const guessBtn = document.getElementById("guessBtn");
 
 input.addEventListener("input", function() {
+  if (!gameActive) return;
   const val = this.value.toLowerCase();
   suggestions.innerHTML = "";
   if (!val) { suggestions.style.display = "none"; return; }
@@ -223,6 +248,7 @@ input.addEventListener("input", function() {
 });
 
 function makeGuess() {
+  if (!gameActive) return;
   const inputVal = input.value.trim();
   const g = characters.find(c => c.name.toLowerCase() === inputVal.toLowerCase());
 
@@ -242,8 +268,31 @@ function makeGuess() {
 
   input.value = "";
   if (g.name === answer.name) {
-    setTimeout(() => { alert("🥇 VICTORY! \n" + answer.name); location.reload(); }, 300);
+    endGame(true);
   }
+}
+
+function giveUp() {
+    if (!gameActive) return;
+    endGame(false);
+}
+
+function endGame(won) {
+    gameActive = false;
+    input.disabled = true;
+    guessBtn.disabled = true;
+    giveUpBtn.style.display = "none";
+    nextBtn.style.display = "inline-block";
+    
+    if (won) {
+        messageArea.innerHTML = `<span style="color: var(--correct)">🥇 VICTORY! THE CHARACTER WAS ${answer.name}</span>`;
+    } else {
+        messageArea.innerHTML = `<span style="color: var(--danger)">OUT OF LUCK! THE ANSWER WAS: ${answer.name}</span>`;
+    }
+}
+
+function nextRound() {
+    location.reload();
 }
 
 function addCell(row, value, targetValue) {
