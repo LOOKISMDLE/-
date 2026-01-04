@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -10,7 +11,7 @@
   --primary: #3498db;
   --correct: #27ae60;
   --partial: #f1c40f;
-  --wrong: #34495e;
+  --wrong: #c0392b; /* Changed to Red */
   --danger: #e74c3c;
   --text: #ffffff;
   --text-dim: #8b97a2;
@@ -67,8 +68,6 @@ input#charSearch {
   box-shadow: 0 4px 15px rgba(0,0,0,0.3);
 }
 
-input#charSearch:focus { border-color: var(--primary); box-shadow: 0 0 10px rgba(52, 152, 219, 0.3); }
-
 #suggestions {
   position: absolute;
   top: 100%;
@@ -82,7 +81,6 @@ input#charSearch:focus { border-color: var(--primary); box-shadow: 0 0 10px rgba
   border-radius: 8px;
   margin-top: 5px;
   display: none;
-  box-shadow: 0 10px 25px rgba(0,0,0,0.5);
 }
 
 .suggestion-item {
@@ -90,7 +88,6 @@ input#charSearch:focus { border-color: var(--primary); box-shadow: 0 0 10px rgba
   cursor: pointer;
   text-align: left;
   border-bottom: 1px solid #2c3136;
-  transition: background 0.2s;
 }
 
 .suggestion-item:hover { background: #2c3136; color: var(--primary); }
@@ -103,7 +100,6 @@ input#charSearch:focus { border-color: var(--primary); box-shadow: 0 0 10px rgba
   cursor: pointer;
   font-weight: 800;
   text-transform: uppercase;
-  transition: transform 0.1s, background 0.3s;
   height: 50px;
 }
 
@@ -111,14 +107,7 @@ input#charSearch:focus { border-color: var(--primary); box-shadow: 0 0 10px rgba
 #giveUpBtn { background: var(--danger); color: white; }
 #nextBtn { background: var(--correct); color: white; display: none; width: 200px; }
 
-.btn:active { transform: scale(0.95); }
-.btn:disabled { background: #444; cursor: not-allowed; }
-
-#messageArea {
-    margin-top: 15px;
-    font-weight: bold;
-    min-height: 24px;
-}
+#messageArea { margin-top: 15px; font-weight: bold; min-height: 24px; }
 
 table {
   margin: 20px auto;
@@ -132,13 +121,12 @@ th {
   color: var(--text-dim);
   text-transform: uppercase;
   font-size: 0.75rem;
-  letter-spacing: 1px;
   padding: 10px;
 }
 
 td {
   padding: 18px 10px;
-  font-size: 14px;
+  font-size: 13px;
   font-weight: 700;
   border-radius: 8px;
   min-width: 100px;
@@ -146,7 +134,7 @@ td {
 }
 
 .green { background: var(--correct); }
-.gray { background: var(--wrong); }
+.red { background: var(--wrong); }
 .yellow { background: var(--partial); color: #111; }
 
 @keyframes reveal {
@@ -155,7 +143,6 @@ td {
 }
 
 tbody tr { animation: reveal 0.5s ease forwards; }
-
 .arrow { font-size: 1.2rem; vertical-align: middle; margin-left: 4px; }
 </style>
 </head>
@@ -163,11 +150,11 @@ tbody tr { animation: reveal 0.5s ease forwards; }
 <body>
 
 <h1>LOOKISMDLE</h1>
-<div class="sub-header">Guess the character using English or Korean names</div>
+<div class="sub-header">Official Wiki Heights & Ages | Red = Incorrect</div>
 
 <div class="controls">
     <div class="search-container">
-      <input type="text" id="charSearch" placeholder="Type a character..." autocomplete="off">
+      <input type="text" id="charSearch" placeholder="Type English or Korean name..." autocomplete="off">
       <div id="suggestions"></div>
       <button id="guessBtn" class="btn" onclick="makeGuess()">GUESS</button>
     </div>
@@ -197,6 +184,7 @@ tbody tr { animation: reveal 0.5s ease forwards; }
 
 <script>
 const characters = [
+  // Generation 2
   {name:"Daniel Park / Park Hyung Suk", gender:"Male", generation:"Gen 2", height:181, affiliation:"Allied", style:"Copy", hair:"Black", age:19},
   {name:"Zack Lee / Lee Jin Sung", gender:"Male", generation:"Gen 2", height:185, affiliation:"Allied", style:"Boxing", hair:"Black", age:19},
   {name:"Vasco / Lee Eun Tae", gender:"Male", generation:"Gen 2", height:183, affiliation:"Burn Knuckles", style:"Muay Thai", hair:"Black", age:19},
@@ -206,16 +194,29 @@ const characters = [
   {name:"Jerry Kwon / Kwon Ji Tae", gender:"Male", generation:"Gen 2", height:215, affiliation:"Big Deal", style:"Boxing", hair:"Bald", age:19},
   {name:"Johan Seong / Seong Yo Han", gender:"Male", generation:"Gen 2", height:179, affiliation:"None", style:"Copy", hair:"Brown", age:19},
   {name:"Eli Jang / Jang Hyun", gender:"Male", generation:"Gen 2", height:182, affiliation:"Hostel", style:"Wildness", hair:"Black", age:19},
+  {name:"Warren Chae / Chae Won Seok", gender:"Male", generation:"Gen 2", height:187, affiliation:"Hostel", style:"CQC", hair:"Black", age:20},
   {name:"Samuel Seo / Seo Seong Eun", gender:"Male", generation:"Gen 2", height:195, affiliation:"Workers", style:"Brawling", hair:"Black", age:20},
   {name:"Logan Lee / Lee Tae Sung", gender:"Male", generation:"Gen 2", height:203, affiliation:"Workers", style:"Jiu-Jitsu", hair:"Black", age:19},
+  {name:"Yuseong / Yoo Sung", gender:"Male", generation:"Gen 2", height:173, affiliation:"Workers", style:"Instinct", hair:"Black", age:19},
+  {name:"Mandeok Bang / Bang Man Deok", gender:"Male", generation:"Gen 2", height:210, affiliation:"Workers", style:"Capoeira", hair:"Black", age:20},
+  {name:"Ryuhei Kuroda / Kuroda Ryuhei", gender:"Male", generation:"Gen 2", height:184, affiliation:"Workers", style:"Kagiroi", hair:"Blonde", age:20},
+
+  // Generation 1
   {name:"James Lee / Lee Ji Hoon", gender:"Male", generation:"Gen 1", height:188, affiliation:"HNH Group", style:"IA", hair:"Pink", age:23},
   {name:"Gun Park / Jong Gun", gender:"Male", generation:"Gen 1", height:190, affiliation:"HNH Group", style:"Kyokushin", hair:"Black", age:20},
   {name:"Goo Kim / Joon Goo", gender:"Male", generation:"Gen 1", height:190, affiliation:"Secret Friends", style:"Weapons", hair:"Blonde", age:20},
   {name:"Sinu Han / Han Shin Woo", gender:"Male", generation:"Gen 1", height:184, affiliation:"Big Deal", style:"IA", hair:"Black", age:22},
   {name:"Jichang Kwak / Kwak Ji Chang", gender:"Male", generation:"Gen 1", height:192, affiliation:"Seoul", style:"Hand Chop", hair:"Black", age:24},
+  {name:"Taesoo Ma / Ma Tae Soo", gender:"Male", generation:"Gen 1", height:191, affiliation:"Ansan", style:"Punching", hair:"Red", age:24},
+  {name:"Gongseob Ji / Ji Gong Seob", gender:"Male", generation:"Gen 1", height:188, affiliation:"Daegu", style:"Boxing", hair:"Bald", age:24},
+
+  // Generation 0
   {name:"Tom Lee / Lee Do Gyu", gender:"Male", generation:"Gen 0", height:213, affiliation:"WTJC", style:"Wildness", hair:"Gray", age:50},
   {name:"Manager Kim / Kim Bu Jang", gender:"Male", generation:"Gen 0", height:178, affiliation:"WTJC", style:"CQC", hair:"Black", age:48},
   {name:"Gapryong Kim / Kim Gap Ryong", gender:"Male", generation:"Gen 0", height:189, affiliation:"Fist Gang", style:"Overcoming", hair:"Black", age:48},
+  {name:"Jinyoung Park / Park Jin Young", gender:"Male", generation:"Gen 0", height:191, affiliation:"Workers", style:"Copy", hair:"Black", age:50},
+
+  // Others
   {name:"Crystal Choi / Choi Soo Jung", gender:"Female", generation:"Gen 2", height:171, affiliation:"HNH Group", style:"Boxing", hair:"Black", age:19},
   {name:"Mary Kim / Kim Mi Jin", gender:"Female", generation:"Gen 2", height:165, affiliation:"None", style:"Judo", hair:"Blonde", age:19}
 ];
@@ -267,15 +268,10 @@ function makeGuess() {
   addComparisonCell(row, g.age, answer.age, "");
 
   input.value = "";
-  if (g.name === answer.name) {
-    endGame(true);
-  }
+  if (g.name === answer.name) endGame(true);
 }
 
-function giveUp() {
-    if (!gameActive) return;
-    endGame(false);
-}
+function giveUp() { if (gameActive) endGame(false); }
 
 function endGame(won) {
     gameActive = false;
@@ -283,29 +279,22 @@ function endGame(won) {
     guessBtn.disabled = true;
     giveUpBtn.style.display = "none";
     nextBtn.style.display = "inline-block";
-    
-    if (won) {
-        messageArea.innerHTML = `<span style="color: var(--correct)">🥇 VICTORY! THE CHARACTER WAS ${answer.name}</span>`;
-    } else {
-        messageArea.innerHTML = `<span style="color: var(--danger)">OUT OF LUCK! THE ANSWER WAS: ${answer.name}</span>`;
-    }
+    messageArea.innerHTML = won ? 
+        `<span style="color: var(--correct)">🏆 CORRECT! THE CHARACTER WAS ${answer.name}</span>` : 
+        `<span style="color: var(--danger)">GAVE UP! THE ANSWER WAS: ${answer.name}</span>`;
 }
 
-function nextRound() {
-    location.reload();
-}
+function nextRound() { location.reload(); }
 
 function addCell(row, value, targetValue) {
   const cell = row.insertCell();
   cell.textContent = value;
-  cell.className = (value === targetValue) ? "green" : "gray";
+  cell.className = (value === targetValue) ? "green" : "red"; // Red if wrong
 }
 
 function addComparisonCell(row, value, targetValue, unit) {
   const cell = row.insertCell();
-  let arrow = "";
-  if (value < targetValue) arrow = ' <span class="arrow">↑</span>';
-  else if (value > targetValue) arrow = ' <span class="arrow">↓</span>';
+  let arrow = value < targetValue ? ' <span class="arrow">↑</span>' : (value > targetValue ? ' <span class="arrow">↓</span>' : "");
   cell.innerHTML = value + unit + arrow;
   cell.className = (value === targetValue) ? "green" : "yellow";
 }
