@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Lookismdle</title>
+
+<style>
+body {
+  background:#111;
+  color:white;
+  font-family:Arial, sans-serif;
+  text-align:center;
+}
+
+h1 { margin-top:20px; }
+
+select, button {
+  padding:12px;
+  font-size:16px;
+  margin:8px;
+  width:85%;
+  max-width:360px;
+}
+
+#preview img {
+  width:120px;
+  height:120px;
+  object-fit:cover;
+  border-radius:10px;
+  margin:10px;
+  border:2px solid #444;
+}
+
+table {
+  margin:20px auto;
+  border-collapse:collapse;
+  width:98%;
+  max-width:1400px;
+}
+
+th, td {
+  border:1px solid #444;
+  padding:6px;
+  font-size:13px;
+}
+
+img.char {
+  width:50px;
+  height:50px;
+  border-radius:6px;
+  object-fit:cover;
+}
+
+.green { background:#2ecc71; }
+.gray { background:#555; }
+</style>
+</head>
+
+<body>
+
+<h1>LOOKISMDLE</h1>
+<p>Select a character, see the image, then guess</p>
+
+<select id="guessSelect" onchange="showPreview()">
+  <option value="">Select character</option>
+</select>
+
+<div id="preview"></div>
+
+<button onclick="makeGuess()">Guess</button>
+
+<table id="resultTable">
+<tr>
+  <th>Image</th>
+  <th>Name</th>
+  <th>Gender</th>
+  <th>Generation</th>
+  <th>Affiliation</th>
+  <th>Style</th>
+  <th>Hair</th>
+  <th>Age</th>
+</tr>
+</table>
+
+<script>
+const characters = [
+  // Main cast
+  {name:"Daniel Park", gender:"Male", generation:"Gen 2", affiliation:"None", style:"Mixed", hair:"Black", age:"Teen",
+   image:"https://static.wikia.nocookie.net/lookism/images/8/8c/Daniel_Park.png"},
+  {name:"Jake Kim", gender:"Male", generation:"Gen 2", affiliation:"Big Deal", style:"Street", hair:"Black", age:"Young Adult",
+   image:"https://static.wikia.nocookie.net/lookism/images/6/6e/Jake_Kim.png"},
+  {name:"Johan Seong", gender:"Male", generation:"Gen 2", affiliation:"None", style:"Boxing", hair:"Blonde", age:"Teen",
+   image:"https://static.wikia.nocookie.net/lookism/images/2/24/Johan_Seong.png"},
+  {name:"Zack Lee", gender:"Male", generation:"Gen 2", affiliation:"Burn Knuckles", style:"Boxing", hair:"Black", age:"Teen",
+   image:"https://static.wikia.nocookie.net/lookism/images/5/5b/Zack_Lee.png"},
+  {name:"Vasco", gender:"Male", generation:"Gen 2", affiliation:"Burn Knuckles", style:"Street", hair:"Brown", age:"Teen",
+   image:"https://static.wikia.nocookie.net/lookism/images/0/0a/Vasco.png"},
+  {name:"Jay Hong", gender:"Male", generation:"Gen 2", affiliation:"None", style:"Weapons", hair:"Black", age:"Teen",
+   image:"https://static.wikia.nocookie.net/lookism/images/3/3f/Jay_Hong.png"},
+
+  // Hostel / Workers
+  {name:"Eli Jang", gender:"Male", generation:"Gen 2", affiliation:"Hostel", style:"Street", hair:"Black", age:"Young Adult",
+   image:"https://static.wikia.nocookie.net/lookism/images/1/1e/Eli_Jang.png"},
+  {name:"Samuel Seo", gender:"Male", generation:"Gen 2", affiliation:"Workers", style:"Street", hair:"Black", age:"Young Adult",
+   image:"https://static.wikia.nocookie.net/lookism/images/9/9d/Samuel_Seo.png"},
+  {name:"Olly Wang", gender:"Male", generation:"Gen 2", affiliation:"Hostel", style:"Street", hair:"Brown", age:"Teen",
+   image:"https://static.wikia.nocookie.net/lookism/images/4/4a/Olly_Wang.png"},
+
+  // Big Deal
+  {name:"Jerry Kwon", gender:"Male", generation:"Gen 2", affiliation:"Big Deal", style:"Street", hair:"Black", age:"Young Adult",
+   image:"https://static.wikia.nocookie.net/lookism/images/8/8e/Jerry_Kwon.png"},
+  {name:"Sinu Han", gender:"Male", generation:"Gen 1", affiliation:"Big Deal", style:"Street", hair:"Black", age:"Adult",
+   image:"https://static.wikia.nocookie.net/lookism/images/3/35/Sinu_Han.png"},
+
+  // First Gen
+  {name:"Gun Park", gender:"Male", generation:"Gen 1", affiliation:"Workers", style:"Martial Arts", hair:"Black", age:"Adult",
+   image:"https://static.wikia.nocookie.net/lookism/images/4/4f/Gun_Park.png"},
+  {name:"Goo Kim", gender:"Male", generation:"Gen 1", affiliation:"Workers", style:"Weapons", hair:"Blonde", age:"Adult",
+   image:"https://static.wikia.nocookie.net/lookism/images/3/3e/Goo_Kim.png"},
+  {name:"Tom Lee", gender:"Male", generation:"Gen 1", affiliation:"WTJC", style:"Street", hair:"Gray", age:"Middle-aged",
+   image:"https://static.wikia.nocookie.net/lookism/images/7/7f/Tom_Lee.png"},
+
+  // Gen 0
+  {name:"Manager Kim", gender:"Male", generation:"Gen 0", affiliation:"WTJC", style:"Military", hair:"Black", age:"Middle-aged",
+   image:"https://static.wikia.nocookie.net/lookism/images/e/e4/Manager_Kim.png"},
+  {name:"Charles Choi", gender:"Male", generation:"Gen 0", affiliation:"HNH Group", style:"Unknown", hair:"Black", age:"Middle-aged",
+   image:"https://static.wikia.nocookie.net/lookism/images/6/63/Charles_Choi.png"}
+];
+
+let answer = randomCharacter();
+
+const select = document.getElementById("guessSelect");
+characters.forEach(c => {
+  const opt = document.createElement("option");
+  opt.value = c.name;
+  opt.textContent = c.name;
+  select.appendChild(opt);
+});
+
+function randomCharacter() {
+  return characters[Math.floor(Math.random() * characters.length)];
+}
+
+function showPreview() {
+  const name = select.value;
+  const preview = document.getElementById("preview");
+  preview.innerHTML = "";
+  if (!name) return;
+
+  const c = characters.find(x => x.name === name);
+  const img = document.createElement("img");
+  img.src = c.image;
+  preview.appendChild(img);
+}
+
+function colorCell(cell, g, a) {
+  cell.className = (g === a) ? "green" : "gray";
+}
+
+function makeGuess() {
+  const name = select.value;
+  if (!name) return;
+
+  const g = characters.find(c => c.name === name);
+  const row = resultTable.insertRow();
+
+  const img = document.createElement("img");
+  img.src = g.image;
+  img.className = "char";
+  row.insertCell().appendChild(img);
+
+  row.insertCell().textContent = g.name;
+
+  ["gender","generation","affiliation","style","hair","age"].forEach(k => {
+    const cell = row.insertCell();
+    cell.textContent = g[k];
+    colorCell(cell, g[k], answer[k]);
+  });
+
+  if (g.name === answer.name) {
+    setTimeout(() => {
+      alert("🎉 Correct! New character selected.");
+      answer = randomCharacter();
+      resultTable.innerHTML = `
+        <tr>
+          <th>Image</th><th>Name</th><th>Gender</th><th>Generation</th>
+          <th>Affiliation</th><th>Style</th><th>Hair</th><th>Age</th>
+        </tr>`;
+    }, 100);
+  }
+}
+</script>
+
+</body>
+</html>
