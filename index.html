@@ -2,68 +2,200 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Lookismdle - Dual Name Edition</title>
 <style>
-:root {
-  --bg: #0b0e11;
-  --surface: #1a1d21;
-  --primary: #3498db;
-  --correct: #27ae60;
-  --partial: #f1c40f;
-  --wrong: #c0392b;
-  --danger: #e74c3c;
-  --text: #ffffff;
-}
+    :root {
+        --bg: #0b0e11;
+        --surface: #1a1d21;
+        --primary: #3498db;
+        --correct: #27ae60;
+        --partial: #f1c40f;
+        --wrong: #c0392b;
+        --danger: #e74c3c;
+        --text: #ffffff;
+        --border: #333;
+    }
 
-body {
-  background: var(--bg);
-  color: var(--text);
-  font-family: 'Inter', sans-serif;
-  text-align: center;
-  margin: 0;
-  padding: 10px;
-}
+    * { box-sizing: border-box; }
 
-.header-box { padding: 20px; background: var(--surface); border-bottom: 3px solid var(--primary); margin-bottom: 20px; }
-.streak-tag { color: var(--partial); font-weight: 800; font-size: 1.2rem; }
-.mode-indicator { 
-    display: inline-block; 
-    padding: 5px 15px; 
-    border-radius: 20px; 
-    font-size: 0.8rem; 
-    font-weight: bold; 
-    margin-top: 10px;
-    background: #444;
-}
-.boss-mode { background: var(--danger) !important; animation: pulse 2s infinite; }
-.style-mode { background: #8e44ad !important; }
+    body {
+        background: var(--bg);
+        color: var(--text);
+        font-family: 'Inter', system-ui, -apple-system, sans-serif;
+        text-align: center;
+        margin: 0;
+        padding: 0;
+        min-height: 100vh;
+        padding-bottom: 50px;
+    }
 
-@keyframes pulse {
-    0% { box-shadow: 0 0 0 0 rgba(231, 76, 60, 0.4); }
-    70% { box-shadow: 0 0 0 10px rgba(231, 76, 60, 0); }
-    100% { box-shadow: 0 0 0 0 rgba(231, 76, 60, 0); }
-}
+    /* HEADER */
+    .header-box { 
+        padding: 20px; 
+        background: var(--surface); 
+        border-bottom: 3px solid var(--primary); 
+        margin-bottom: 20px; 
+        box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+    }
 
-.search-container { position: relative; display: flex; justify-content: center; gap: 10px; max-width: 600px; margin: 0 auto 30px; }
-input { padding: 12px; border-radius: 8px; border: none; width: 70%; background: #2c3136; color: white; }
-.btn { cursor: pointer; border: none; border-radius: 8px; font-weight: bold; padding: 10px 20px; text-transform: uppercase; }
-.btn-guess { background: var(--primary); color: white; }
-.btn-next { background: var(--correct); color: white; display: none; }
-.btn-mode { background: #555; color: white; margin-bottom: 5px; font-size: 0.7rem; }
+    h1 { margin: 10px 0; font-weight: 900; letter-spacing: 1px; }
 
-table { margin: 0 auto; border-spacing: 5px; width: 100%; max-width: 1300px; }
-td { padding: 15px 5px; font-size: 10px; font-weight: bold; border-radius: 5px; color: white; }
-.green { background: var(--correct); }
-.yellow { background: var(--partial); color: #000; }
-.red { background: var(--wrong); }
+    .streak-tag { color: var(--partial); font-weight: 800; font-size: 1.1rem; margin-bottom: 5px; }
 
-#suggestions {
-  position: absolute; top: 100%; left: 10%; width: 60%; 
-  background: var(--surface); z-index: 10; border-radius: 0 0 8px 8px;
-  max-height: 200px; overflow-y: auto; display: none;
-}
-.sug-item { padding: 10px; text-align: left; cursor: pointer; border-bottom: 1px solid #333; font-size: 0.9rem; }
-.style-hint { font-size: 1.5rem; color: #8e44ad; font-weight: 900; margin: 10px 0; text-transform: uppercase; }
+    /* MODES */
+    .mode-btn-container {
+        display: flex; 
+        justify-content: center; 
+        gap: 8px; 
+        flex-wrap: wrap; 
+        margin: 15px 0;
+    }
+
+    .btn-mode { 
+        background: #444; 
+        color: #ccc; 
+        font-size: 0.75rem; 
+        padding: 8px 12px;
+        transition: 0.2s;
+        border: 1px solid #555;
+    }
+    .btn-mode:hover { background: #555; color: white; }
+    .btn-mode.active { border-color: var(--primary); color: white; background: #2c3e50; }
+
+    .mode-indicator { 
+        display: inline-block; 
+        padding: 6px 18px; 
+        border-radius: 20px; 
+        font-size: 0.85rem; 
+        font-weight: bold; 
+        margin-top: 10px;
+        background: var(--surface);
+        border: 1px solid #444;
+    }
+    .boss-mode { background: var(--danger) !important; color: white; animation: pulse 2s infinite; border: none; }
+    .style-mode { background: #8e44ad !important; color: white; border: none; }
+
+    @keyframes pulse {
+        0% { box-shadow: 0 0 0 0 rgba(231, 76, 60, 0.4); }
+        70% { box-shadow: 0 0 0 10px rgba(231, 76, 60, 0); }
+        100% { box-shadow: 0 0 0 0 rgba(231, 76, 60, 0); }
+    }
+
+    /* HINTS */
+    .style-hint { 
+        font-size: 1.4rem; 
+        color: #8e44ad; 
+        font-weight: 900; 
+        margin: 15px 0; 
+        text-transform: uppercase; 
+        background: rgba(142, 68, 173, 0.1);
+        display: inline-block;
+        padding: 10px 20px;
+        border-radius: 8px;
+        border: 1px solid #8e44ad;
+    }
+
+    /* SEARCH AREA */
+    .search-wrapper {
+        position: relative;
+        max-width: 600px;
+        margin: 0 auto 20px;
+        padding: 0 10px;
+        display: flex;
+        gap: 8px;
+    }
+
+    input { 
+        flex: 1;
+        padding: 14px; 
+        border-radius: 8px; 
+        border: 1px solid var(--border); 
+        background: #2c3136; 
+        color: white; 
+        font-size: 1rem;
+        outline: none;
+    }
+    input:focus { border-color: var(--primary); }
+
+    .btn { cursor: pointer; border: none; border-radius: 8px; font-weight: bold; padding: 0 20px; text-transform: uppercase; font-size: 0.9rem; }
+    .btn-guess { background: var(--primary); color: white; }
+    .btn-guess:hover { background: #2980b9; }
+
+    .btn-next { 
+        background: var(--correct); 
+        color: white; 
+        display: none; 
+        padding: 15px 30px; 
+        font-size: 1.2rem;
+        margin: 20px auto;
+        box-shadow: 0 0 15px rgba(39, 174, 96, 0.4);
+    }
+
+    /* SUGGESTIONS */
+    #suggestions {
+        position: absolute; 
+        top: 100%; 
+        left: 10px; 
+        right: 10px; /* Matches padding of wrapper */
+        background: #222; 
+        z-index: 100; 
+        border-radius: 0 0 8px 8px;
+        max-height: 250px; 
+        overflow-y: auto; 
+        display: none;
+        border: 1px solid var(--border);
+        box-shadow: 0 10px 20px rgba(0,0,0,0.8);
+    }
+    .sug-item { 
+        padding: 12px; 
+        text-align: left; 
+        cursor: pointer; 
+        border-bottom: 1px solid #333; 
+        font-size: 0.95rem; 
+        color: #ddd;
+    }
+    .sug-item:hover { background: var(--primary); color: white; }
+
+    /* TABLE */
+    .table-container {
+        overflow-x: auto;
+        padding: 0 10px;
+        margin-top: 20px;
+    }
+    
+    table { 
+        margin: 0 auto; 
+        border-spacing: 4px; 
+        border-collapse: separate;
+        width: 100%; 
+        max-width: 1200px; 
+        white-space: nowrap;
+    }
+    
+    th { padding: 10px; font-size: 0.8rem; color: #aaa; text-transform: uppercase; letter-spacing: 1px; }
+    
+    td { 
+        padding: 15px 10px; 
+        font-size: 0.9rem; 
+        font-weight: bold; 
+        border-radius: 4px; 
+        color: white; 
+        text-shadow: 0 1px 2px rgba(0,0,0,0.5);
+        animation: flipIn 0.5s ease;
+    }
+
+    @keyframes flipIn {
+        from { transform: rotateX(90deg); opacity: 0; }
+        to { transform: rotateX(0); opacity: 1; }
+    }
+
+    /* COLOR CODING */
+    .green { background: var(--correct); }
+    .yellow { background: var(--partial); color: #000; text-shadow: none; }
+    .red { background: var(--wrong); }
+
+    #msg { min-height: 20px; margin-top: 10px; font-weight: bold; font-size: 1.2rem; }
 </style>
 </head>
 <body>
@@ -71,42 +203,53 @@ td { padding: 15px 5px; font-size: 10px; font-weight: bold; border-radius: 5px; 
 <div class="header-box">
     <div class="streak-tag">🔥 STREAK: <span id="streakVal">0</span></div>
     <h1>LOOKISMDLE</h1>
-    <div style="display: flex; justify-content: center; gap: 5px; flex-wrap: wrap;">
+    
+    <div class="mode-btn-container">
         <button class="btn btn-mode" onclick="setMode('classic')">Classic</button>
         <button class="btn btn-mode" onclick="setMode('boss')">Boss Rush</button>
         <button class="btn btn-mode" onclick="setMode('style')">Style Mastery</button>
     </div>
+
     <div id="modeTag" class="mode-indicator">Classic Mode</div>
-    <div id="styleHintArea" class="style-hint" style="display:none;">STYLE: <span id="styleName">?</span></div>
-    <div id="guessCounter" style="display:none; margin-top:10px;">Guesses Left: <span id="countVal">5</span></div>
+    
+    <div id="styleHintArea" class="style-hint" style="display:none;">
+        STYLE: <span id="styleName">?</span>
+    </div>
+    
+    <div id="guessCounter" style="display:none; margin-top:10px; font-weight:bold; color:var(--danger);">
+        BOSS RUSH: <span id="countVal">5</span> Guesses Left
+    </div>
 </div>
 
-<div class="search-container">
-    <input type="text" id="charSearch" placeholder="Type English or Korean name..." autocomplete="off">
+<div class="search-wrapper">
+    <input type="text" id="charSearch" placeholder="Type character name..." autocomplete="off">
     <div id="suggestions"></div>
     <button class="btn btn-guess" onclick="makeGuess()">Guess</button>
 </div>
 
 <div id="msg"></div>
-<button class="btn btn-next" id="nextBtn" onclick="location.reload()">Next Round</button>
+<button class="btn btn-next" id="nextBtn" onclick="nextRound()">Next Round</button>
 
-<table>
-    <thead>
-        <tr>
-            <th>Name</th>
-            <th>Gen</th>
-            <th>Height</th>
-            <th>Hometown</th>
-            <th>Affiliation</th>
-            <th>Style</th>
-            <th>Hair</th>
-            <th>Age</th>
-        </tr>
-    </thead>
-    <tbody id="tableBody"></tbody>
-</table>
+<div class="table-container">
+    <table>
+        <thead>
+            <tr>
+                <th>Character</th>
+                <th>Gen</th>
+                <th>Height</th>
+                <th>Hometown</th>
+                <th>Affiliation</th>
+                <th>Style</th>
+                <th>Hair</th>
+                <th>Age</th>
+            </tr>
+        </thead>
+        <tbody id="tableBody"></tbody>
+    </table>
+</div>
 
 <script>
+/* FULL CHARACTER DATABASE */
 const characters = [
   {name:"Daniel Park / Park Hyung Suk", gen:"Gen 2", height:181, hometown:"Seoul", aff:"Allied", former:["Workers"], style:"Copy", hair:"Black", age:19},
   {name:"Johan Seong / Seong Yo Han", gen:"Gen 2", height:179, hometown:"Seoul", aff:"None", former:["God Dog", "Big Deal", "Workers"], style:"Copy", hair:"Brown", age:19},
@@ -187,14 +330,29 @@ const characters = [
   {name:"Joy Hong / Hong Jae Hye", gen:"Gen 2", height:162, hometown:"Seoul", aff:"None", former:["None"], style:"None", hair:"Blonde", age:17}
 ];
 
-let streak = localStorage.getItem("lookism_streak") || 0;
-let currentMode = localStorage.getItem("lookism_mode") || "classic";
+// LocalStorage Helper to prevent crashes if disabled
+function getStorage(key, def) {
+    try {
+        return localStorage.getItem(key) || def;
+    } catch(e) { return def; }
+}
+
+function setStorage(key, val) {
+    try {
+        localStorage.setItem(key, val);
+    } catch(e) {}
+}
+
+let streak = parseInt(getStorage("lookism_streak", "0"));
+let currentMode = getStorage("lookism_mode", "classic");
 let guessesLeft = 5;
 let gameActive = true;
 let answer;
 
 function initGame() {
+    // Mode Logic
     if (currentMode === 'style') {
+        // Filter out chars with no style
         const validChars = characters.filter(c => c.style !== "None");
         answer = validChars[Math.floor(Math.random() * validChars.length)];
         document.getElementById("styleHintArea").style.display = "block";
@@ -203,102 +361,7 @@ function initGame() {
         answer = characters[Math.floor(Math.random() * characters.length)];
         document.getElementById("styleHintArea").style.display = "none";
     }
-    
+
     document.getElementById("streakVal").textContent = streak;
     updateModeUI();
-}
-
-function setMode(mode) {
-    localStorage.setItem("lookism_mode", mode);
-    location.reload();
-}
-
-function updateModeUI() {
-    const tag = document.getElementById("modeTag");
-    const counter = document.getElementById("guessCounter");
-    tag.className = "mode-indicator";
-    counter.style.display = "none";
-
-    if(currentMode === "boss") {
-        tag.textContent = "BOSS RUSH MODE (5 Guesses)";
-        tag.classList.add("boss-mode");
-        counter.style.display = "block";
-        document.getElementById("countVal").textContent = guessesLeft;
-    } else if (currentMode === "style") {
-        tag.textContent = "STYLE MASTERY MODE";
-        tag.classList.add("style-mode");
-    } else {
-        tag.textContent = "CLASSIC MODE";
-    }
-}
-
-const input = document.getElementById("charSearch");
-const sugBox = document.getElementById("suggestions");
-
-input.oninput = () => {
-    const val = input.value.toLowerCase();
-    sugBox.innerHTML = "";
-    if(!val) { sugBox.style.display = "none"; return; }
-    const filtered = characters.filter(c => c.name.toLowerCase().includes(val));
-    filtered.forEach(c => {
-        const d = document.createElement("div");
-        d.className = "sug-item";
-        d.textContent = c.name;
-        d.onclick = () => { input.value = c.name; sugBox.style.display = "none"; };
-        sugBox.appendChild(d);
-    });
-    sugBox.style.display = filtered.length ? "block" : "none";
-};
-
-function makeGuess() {
-    if(!gameActive) return;
-    const g = characters.find(c => c.name.toLowerCase() === input.value.toLowerCase());
-    if(!g) return;
-
-    const row = document.getElementById("tableBody").insertRow(0);
-    let affClass = (g.aff === answer.aff) ? "green" : (answer.former.includes(g.aff) || g.former.includes(answer.aff) ? "yellow" : "red");
-
-    addCell(row, g.name, g.name === answer.name ? "green" : "red");
-    addCell(row, g.gen, g.gen === answer.gen ? "green" : "red");
-    addComparisonCell(row, g.height, answer.height, "cm");
-    addCell(row, g.hometown, g.hometown === answer.hometown ? "green" : "red");
-    addCell(row, g.aff, affClass);
-    addCell(row, g.style, g.style === answer.style ? "green" : "red");
-    addCell(row, g.hair, g.hair === answer.hair ? "green" : "red");
-    addComparisonCell(row, g.age, answer.age, "");
-
-    input.value = "";
-    
-    if(g.name === answer.name) {
-        winGame();
-    } else if(currentMode === "boss") {
-        guessesLeft--;
-        document.getElementById("countVal").textContent = guessesLeft;
-        if(guessesLeft <= 0) loseGame();
-    }
-}
-
-function winGame() {
-    gameActive = false;
-    streak++;
-    localStorage.setItem("lookism_streak", streak);
-    document.getElementById("msg").innerHTML = `<h2 style="color:var(--correct)">VICTORY!</h2>`;
-    document.getElementById("nextBtn").style.display = "inline-block";
-}
-
-function loseGame() {
-    gameActive = false;
-    localStorage.setItem("lookism_streak", 0);
-    document.getElementById("msg").innerHTML = `<h2 style="color:var(--danger)">FAILED! It was ${answer.name}</h2>`;
-    document.getElementById("nextBtn").style.display = "inline-block";
-}
-
-function addCell(row, val, cls) {
-    const c = row.insertCell();
-    c.textContent = val;
-    c.className = cls;
-}
-
-function addComparisonCell(row, val, target, unit) {
-    const c = row.insertCell();
-    const arrow = val < target ? " ↑" : (val > target ? " ↓" : "");
+    console.log("Answer loaded (Secret):", a
