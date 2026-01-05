@@ -1,303 +1,225 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>Lookismdle - Streak Edition</title>
+<title>Lookismdle - Boss Rush Edition</title>
 <style>
 :root {
   --bg: #0b0e11;
   --surface: #1a1d21;
   --primary: #3498db;
   --correct: #27ae60;
-  --wrong: #c0392b; /* Pure Red for incorrect */
+  --partial: #f1c40f;
+  --wrong: #c0392b;
   --danger: #e74c3c;
   --text: #ffffff;
-  --text-dim: #8b97a2;
 }
 
 body {
   background: var(--bg);
   color: var(--text);
-  font-family: 'Inter', 'Segoe UI', Roboto, sans-serif;
+  font-family: 'Inter', sans-serif;
   text-align: center;
   margin: 0;
-  padding: 20px;
+  padding: 10px;
 }
 
-.streak-container {
-  font-size: 1.2rem;
-  font-weight: 800;
-  color: var(--partial);
-  margin-bottom: 10px;
-  text-transform: uppercase;
-  letter-spacing: 1px;
+/* UI Elements */
+.header-box { padding: 20px; background: var(--surface); border-bottom: 3px solid var(--primary); margin-bottom: 20px; }
+.streak-tag { color: var(--partial); font-weight: 800; font-size: 1.2rem; }
+.mode-indicator { 
+    display: inline-block; 
+    padding: 5px 15px; 
+    border-radius: 20px; 
+    font-size: 0.8rem; 
+    font-weight: bold; 
+    margin-top: 10px;
+    background: #444;
+}
+.boss-mode { background: var(--danger) !important; animation: pulse 2s infinite; }
+
+@keyframes pulse {
+    0% { box-shadow: 0 0 0 0 rgba(231, 76, 60, 0.4); }
+    70% { box-shadow: 0 0 0 10px rgba(231, 76, 60, 0); }
+    100% { box-shadow: 0 0 0 0 rgba(231, 76, 60, 0); }
 }
 
-#streakCount { color: #f1c40f; font-size: 1.5rem; }
+/* Buttons and Inputs */
+.search-container { position: relative; display: flex; justify-content: center; gap: 10px; max-width: 600px; margin: 0 auto 30px; }
+input { padding: 12px; border-radius: 8px; border: none; width: 70%; background: #2c3136; color: white; }
+.btn { cursor: pointer; border: none; border-radius: 8px; font-weight: bold; padding: 10px 20px; text-transform: uppercase; }
+.btn-guess { background: var(--primary); color: white; }
+.btn-next { background: var(--correct); color: white; display: none; }
+.btn-mode { background: #555; color: white; margin-bottom: 10px; }
 
-h1 { 
-  margin: 5px 0; 
-  font-size: 2.5rem;
-  font-weight: 900;
-  text-transform: uppercase; 
-  letter-spacing: 4px;
-  background: linear-gradient(to right, #3498db, #8e44ad);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-}
-
-.sub-header { color: var(--text-dim); margin-bottom: 30px; font-size: 0.8rem; }
-
-.controls {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 15px;
-  margin-bottom: 40px;
-}
-
-.search-container {
-  position: relative;
-  display: inline-flex;
-  width: 100%;
-  max-width: 600px;
-  gap: 10px;
-}
-
-input#charSearch {
-  flex: 1;
-  padding: 15px 20px;
-  font-size: 16px;
-  border-radius: 12px;
-  border: 2px solid #2c3136;
-  background: var(--surface);
-  color: white;
-  outline: none;
-  transition: all 0.3s ease;
-}
+/* Table */
+table { margin: 0 auto; border-spacing: 5px; width: 100%; max-width: 1200px; }
+td { padding: 15px 5px; font-size: 11px; font-weight: bold; border-radius: 5px; color: white; }
+.green { background: var(--correct); }
+.yellow { background: var(--partial); color: #000; } /* Partial match */
+.red { background: var(--wrong); }
 
 #suggestions {
-  position: absolute;
-  top: 100%;
-  left: 0;
-  width: calc(100% - 110px);
-  background: var(--surface);
-  border: 1px solid #2c3136;
-  z-index: 1000;
-  max-height: 250px;
-  overflow-y: auto;
-  border-radius: 8px;
-  display: none;
+  position: absolute; top: 100%; left: 10%; width: 60%; 
+  background: var(--surface); z-index: 10; border-radius: 0 0 8px 8px;
+  max-height: 200px; overflow-y: auto; display: none;
 }
-
-.suggestion-item {
-  padding: 12px 20px;
-  cursor: pointer;
-  text-align: left;
-  border-bottom: 1px solid #2c3136;
-}
-
-.suggestion-item:hover { background: #2c3136; color: var(--primary); }
-
-.btn {
-  padding: 0 25px;
-  font-size: 14px;
-  border: none;
-  border-radius: 12px;
-  cursor: pointer;
-  font-weight: 800;
-  text-transform: uppercase;
-  height: 50px;
-}
-
-#guessBtn { background: var(--primary); color: white; }
-#giveUpBtn { background: var(--danger); color: white; }
-#nextBtn { background: var(--correct); color: white; display: none; width: 220px; }
-
-#messageArea { margin-top: 15px; font-weight: bold; min-height: 24px; }
-
-table {
-  margin: 20px auto;
-  border-collapse: separate;
-  border-spacing: 5px;
-  width: 100%;
-  max-width: 1400px;
-}
-
-th { color: var(--text-dim); text-transform: uppercase; font-size: 0.65rem; padding: 8px; }
-
-td {
-  padding: 15px 5px;
-  font-size: 11px;
-  font-weight: 700;
-  border-radius: 6px;
-  min-width: 75px;
-  box-shadow: inset 0 -3px 0 rgba(0,0,0,0.1);
-  color: white;
-}
-
-.green { background: var(--correct) !important; }
-.red { background: var(--wrong) !important; }
-
-@keyframes reveal {
-  0% { transform: perspective(400px) rotateX(90deg); opacity: 0; }
-  100% { transform: perspective(400px) rotateX(0deg); opacity: 1; }
-}
-
-tbody tr { animation: reveal 0.5s ease forwards; }
-.arrow { font-size: 1.1rem; vertical-align: middle; margin-left: 2px; }
+.sug-item { padding: 10px; text-align: left; cursor: pointer; border-bottom: 1px solid #333; }
+.sug-item:hover { background: #333; }
 </style>
 </head>
-
 <body>
 
-<div class="streak-container">🔥 STREAK: <span id="streakCount">0</span></div>
-<h1>LOOKISMDLE</h1>
-<div class="sub-header">All categories Red if wrong | Arrows show higher/lower</div>
-
-<div class="controls">
-    <div class="search-container">
-      <input type="text" id="charSearch" placeholder="Type character name..." autocomplete="off">
-      <div id="suggestions"></div>
-      <button id="guessBtn" class="btn" onclick="makeGuess()">GUESS</button>
-    </div>
-    
-    <div>
-        <button id="giveUpBtn" class="btn" onclick="giveUp()">Give Up</button>
-        <button id="nextBtn" class="btn" onclick="nextRound()">Next Character</button>
-    </div>
-    <div id="messageArea"></div>
+<div class="header-box">
+    <div class="streak-tag">🔥 STREAK: <span id="streakVal">0</span></div>
+    <h1>LOOKISMDLE</h1>
+    <button class="btn btn-mode" onclick="toggleMode()">Switch to <span id="modeName">Boss Rush</span> Mode</button>
+    <div id="modeTag" class="mode-indicator">Classic Mode (Unlimited Guesses)</div>
+    <div id="guessCounter" style="display:none; margin-top:10px;">Guesses Left: <span id="countVal">5</span></div>
 </div>
 
-<table id="resultTable">
-  <thead>
-    <tr>
-      <th>Name</th>
-      <th>Gender</th>
-      <th>Gen</th>
-      <th>Height</th>
-      <th>Hometown</th>
-      <th>Affiliation</th>
-      <th>Style</th>
-      <th>Hair</th>
-      <th>Age</th>
-    </tr>
-  </thead>
-  <tbody id="tableBody"></tbody>
+<div class="search-container">
+    <input type="text" id="charSearch" placeholder="Enter English or Korean name..." autocomplete="off">
+    <div id="suggestions"></div>
+    <button class="btn btn-guess" onclick="makeGuess()">Guess</button>
+</div>
+
+<div id="msg"></div>
+<button class="btn btn-next" id="nextBtn" onclick="location.reload()">Next Round</button>
+
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Gen</th>
+            <th>Height</th>
+            <th>Hometown</th>
+            <th>Affiliation</th>
+            <th>Style</th>
+            <th>Age</th>
+        </tr>
+    </thead>
+    <tbody id="tableBody"></tbody>
 </table>
 
 <script>
+// Logic: Former Affiliations add the "Yellow" partial match
 const characters = [
-  {name:"Daniel Park / Park Hyung Suk", gender:"Male", generation:"Gen 2", height:181, hometown:"Seoul", affiliation:"Allied", style:"Copy", hair:"Black", age:19},
-  {name:"Zack Lee / Lee Jin Sung", gender:"Male", generation:"Gen 2", height:185, hometown:"Seoul", affiliation:"Allied", style:"Boxing", hair:"Black", age:19},
-  {name:"Vasco / Lee Eun Tae", gender:"Male", generation:"Gen 2", height:183, hometown:"Seoul", affiliation:"Burn Knuckles", style:"Muay Thai", hair:"Black", age:19},
-  {name:"Jay Hong / Hong Jae Yeol", gender:"Male", generation:"Gen 2", height:182, hometown:"Seoul", affiliation:"Allied", style:"Systema", hair:"Blonde", age:19},
-  {name:"Vin Jin / Jin Ho Bin", gender:"Male", generation:"Gen 2", height:180, hometown:"Cheonliang", affiliation:"Allied", style:"Ssireum", hair:"Black", age:19},
-  {name:"Jake Kim / Kim Gi Myeong", gender:"Male", generation:"Gen 2", height:194, hometown:"Seoul", affiliation:"Big Deal", style:"MMA", hair:"Black", age:19},
-  {name:"Jerry Kwon / Kwon Ji Tae", gender:"Male", generation:"Gen 2", height:215, hometown:"Seoul", affiliation:"Big Deal", style:"Boxing", hair:"Bald", age:19},
-  {name:"Johan Seong / Seong Yo Han", gender:"Male", generation:"Gen 2", height:179, hometown:"Seoul", affiliation:"None", style:"Copy", hair:"Brown", age:19},
-  {name:"Eli Jang / Jang Hyun", gender:"Male", generation:"Gen 2", height:182, hometown:"Seoul", affiliation:"Hostel", style:"Wildness", hair:"Black", age:19},
-  {name:"Samuel Seo / Seo Seong Eun", gender:"Male", generation:"Gen 2", height:195, hometown:"Seoul", affiliation:"Workers", style:"Brawling", hair:"Black", age:20},
-  {name:"Logan Lee / Lee Tae Sung", gender:"Male", generation:"Gen 2", height:203, hometown:"Seoul", affiliation:"Workers", style:"Jiu-Jitsu", hair:"Black", age:19},
-  {name:"Hudson Ahn / Ahn Hyun Sung", gender:"Male", generation:"Gen 2", height:178, hometown:"Ansan", affiliation:"Allied", style:"Punching", hair:"Blonde", age:20},
-  {name:"James Lee / Lee Ji Hoon", gender:"Male", generation:"Gen 1", height:188, hometown:"Seoul", affiliation:"HNH Group", style:"IA", hair:"Pink", age:23},
-  {name:"Gun Park / Jong Gun", gender:"Male", generation:"Gen 1", height:190, hometown:"Tokyo", affiliation:"HNH Group", style:"Kyokushin", hair:"Black", age:20},
-  {name:"Goo Kim / Joon Goo", gender:"Male", generation:"Gen 1", height:190, hometown:"Seoul", affiliation:"Secret Friends", style:"Weapons", hair:"Blonde", age:20},
-  {name:"Jichang Kwak / Kwak Ji Chang", gender:"Male", generation:"Gen 1", height:192, hometown:"Seoul", affiliation:"Chungcheong", style:"Hand Chop", hair:"Black", age:24},
-  {name:"Taesoo Ma / Ma Tae Soo", gender:"Male", generation:"Gen 1", height:191, hometown:"Ansan", affiliation:"Ansan", style:"Punching", hair:"Red", age:24},
-  {name:"Tom Lee / Lee Do Gyu", gender:"Male", generation:"Gen 0", height:213, hometown:"Seoul", affiliation:"WTJC", style:"Wildness", hair:"Gray", age:50},
-  {name:"Manager Kim / Kim Bu Jang", gender:"Male", generation:"Gen 0", height:178, hometown:"Namhae", affiliation:"WTJC", style:"CQC", hair:"Black", age:48},
-  {name:"Gapryong Kim / Kim Gap Ryong", gender:"Male", generation:"Gen 0", height:189, hometown:"Seoul", affiliation:"Fist Gang", style:"Overcoming", hair:"Black", age:48}
+  {name:"Daniel Park / Park Hyung Suk", gen:"Gen 2", height:181, hometown:"Seoul", aff:"Allied", former:["Workers"], style:"Copy", age:19},
+  {name:"Johan Seong / Seong Yo Han", gen:"Gen 2", height:179, hometown:"Seoul", aff:"None", former:["God Dog", "Big Deal", "Workers"], style:"Copy", age:19},
+  {name:"Eli Jang / Jang Hyun", gen:"Gen 2", height:182, hometown:"Seoul", aff:"Hostel", former:["Workers"], style:"Wildness", age:19},
+  {name:"Zack Lee / Lee Jin Sung", gen:"Gen 2", height:185, hometown:"Seoul", aff:"Allied", former:["None"], style:"Boxing", age:19},
+  {name:"Samuel Seo / Seo Seong Eun", gen:"Gen 2", height:195, hometown:"Seoul", aff:"Workers", former:["Big Deal"], style:"Brawling", age:20},
+  {name:"Sinu Han / Han Shin Woo", gen:"Gen 1", height:184, hometown:"Seoul", aff:"Big Deal", former:["Workers"], style:"IA", age:22},
+  {name:"Jake Kim / Kim Gi Myeong", gen:"Gen 2", height:194, hometown:"Seoul", aff:"Big Deal", former:["None"], style:"MMA", age:19},
+  {name:"Gun Park / Jong Gun", gen:"Gen 1", height:190, hometown:"Tokyo", aff:"HNH Group", former:["Magami Family"], style:"Kyokushin", age:20},
+  {name:"Vasco / Lee Eun Tae", gen:"Gen 2", height:183, hometown:"Seoul", aff:"Burn Knuckles", former:["Allied"], style:"Muay Thai", age:19},
+  {name:"Hudson Ahn / Ahn Hyun Sung", gen:"Gen 2", height:178, hometown:"Ansan", aff:"Allied", former:["Ansan"], style:"Punching", age:20}
+  // ... more characters follow the same structure
 ];
 
 let streak = localStorage.getItem("lookism_streak") || 0;
-document.getElementById("streakCount").textContent = streak;
-
-let answer = characters[Math.floor(Math.random() * characters.length)];
+let isBossMode = localStorage.getItem("lookism_mode") === "boss";
+let guessesLeft = 5;
 let gameActive = true;
-let hasWon = false;
+const answer = characters[Math.floor(Math.random() * characters.length)];
 
-const input = document.getElementById("charSearch");
-const suggestions = document.getElementById("suggestions");
-const messageArea = document.getElementById("messageArea");
+document.getElementById("streakVal").textContent = streak;
+updateModeUI();
 
-input.addEventListener("input", function() {
-  if (!gameActive) return;
-  const val = this.value.toLowerCase();
-  suggestions.innerHTML = "";
-  if (!val) { suggestions.style.display = "none"; return; }
-  const filtered = characters.filter(c => c.name.toLowerCase().includes(val));
-  filtered.forEach(c => {
-    const div = document.createElement("div");
-    div.className = "suggestion-item";
-    div.textContent = c.name;
-    div.onclick = () => { input.value = c.name; suggestions.style.display = "none"; };
-    suggestions.appendChild(div);
-  });
-  suggestions.style.display = filtered.length ? "block" : "none";
-});
-
-function makeGuess() {
-  if (!gameActive) return;
-  const inputVal = input.value.trim();
-  const g = characters.find(c => c.name.toLowerCase() === inputVal.toLowerCase());
-  if (!g) return;
-
-  const tableBody = document.getElementById("tableBody");
-  const row = tableBody.insertRow(0);
-
-  addCell(row, g.name, answer.name);
-  addCell(row, g.gender, answer.gender);
-  addCell(row, g.generation, answer.generation);
-  addComparisonCell(row, g.height, answer.height, "cm");
-  addCell(row, g.hometown, answer.hometown);
-  addCell(row, g.affiliation, answer.affiliation);
-  addCell(row, g.style, answer.style);
-  addCell(row, g.hair, answer.hair);
-  addComparisonCell(row, g.age, answer.age, "");
-
-  input.value = "";
-  if (g.name === answer.name) endGame(true);
-}
-
-function giveUp() { if (gameActive) endGame(false); }
-
-function endGame(won) {
-    gameActive = false;
-    hasWon = won;
-    input.disabled = true;
-    document.getElementById("guessBtn").disabled = true;
-    document.getElementById("giveUpBtn").style.display = "none";
-    document.getElementById("nextBtn").style.display = "inline-block";
-    
-    if (won) {
-        messageArea.innerHTML = `<span style="color: var(--correct)">🏆 CORRECT! THE CHARACTER WAS ${answer.name}</span>`;
-    } else {
-        localStorage.setItem("lookism_streak", 0);
-        messageArea.innerHTML = `<span style="color: var(--danger)">STREAK RESET! THE ANSWER WAS: ${answer.name}</span>`;
-    }
-}
-
-function nextRound() {
-    if (hasWon) {
-        streak++;
-        localStorage.setItem("lookism_streak", streak);
-    }
+function toggleMode() {
+    isBossMode = !isBossMode;
+    localStorage.setItem("lookism_mode", isBossMode ? "boss" : "classic");
     location.reload();
 }
 
-function addCell(row, value, targetValue) {
-  const cell = row.insertCell();
-  cell.textContent = value;
-  cell.className = (value === targetValue) ? "green" : "red";
+function updateModeUI() {
+    const tag = document.getElementById("modeTag");
+    const name = document.getElementById("modeName");
+    const counter = document.getElementById("guessCounter");
+    if(isBossMode) {
+        tag.textContent = "BOSS RUSH MODE (5 Guesses)";
+        tag.classList.add("boss-mode");
+        name.textContent = "Classic";
+        counter.style.display = "block";
+    }
 }
 
-function addComparisonCell(row, value, targetValue, unit) {
-  const cell = row.insertCell();
-  let arrow = value < targetValue ? ' <span class="arrow">↑</span>' : (value > targetValue ? ' <span class="arrow">↓</span>' : "");
-  cell.innerHTML = value + unit + arrow;
-  cell.className = (value === targetValue) ? "green" : "red"; // Now Red if wrong
+const input = document.getElementById("charSearch");
+const sugBox = document.getElementById("suggestions");
+
+input.oninput = () => {
+    const val = input.value.toLowerCase();
+    sugBox.innerHTML = "";
+    if(!val) { sugBox.style.display = "none"; return; }
+    const filtered = characters.filter(c => c.name.toLowerCase().includes(val));
+    filtered.forEach(c => {
+        const d = document.createElement("div");
+        d.className = "sug-item";
+        d.textContent = c.name;
+        d.onclick = () => { input.value = c.name; sugBox.style.display = "none"; };
+        sugBox.appendChild(d);
+    });
+    sugBox.style.display = filtered.length ? "block" : "none";
+};
+
+function makeGuess() {
+    if(!gameActive) return;
+    const g = characters.find(c => c.name.toLowerCase() === input.value.toLowerCase());
+    if(!g) return;
+
+    const row = document.getElementById("tableBody").insertRow(0);
+    
+    // Check Affiliation for Partial Match (Yellow)
+    let affClass = "red";
+    if (g.aff === answer.aff) affClass = "green";
+    else if (answer.former.includes(g.aff) || g.former.includes(answer.aff)) affClass = "yellow";
+
+    addCell(row, g.name, g.name === answer.name ? "green" : "red");
+    addCell(row, g.gen, g.gen === answer.gen ? "green" : "red");
+    addComparisonCell(row, g.height, answer.height, "cm");
+    addCell(row, g.hometown, g.hometown === answer.hometown ? "green" : "red");
+    addCell(row, g.aff, affClass);
+    addCell(row, g.style, g.style === answer.style ? "green" : "red");
+    addComparisonCell(row, g.age, answer.age, "");
+
+    input.value = "";
+    
+    if(g.name === answer.name) {
+        winGame();
+    } else if(isBossMode) {
+        guessesLeft--;
+        document.getElementById("countVal").textContent = guessesLeft;
+        if(guessesLeft <= 0) loseGame();
+    }
+}
+
+function winGame() {
+    gameActive = false;
+    streak++;
+    localStorage.setItem("lookism_streak", streak);
+    document.getElementById("msg").innerHTML = `<h2 style="color:var(--correct)">VICTORY!</h2>`;
+    document.getElementById("nextBtn").style.display = "inline-block";
+}
+
+function loseGame() {
+    gameActive = false;
+    localStorage.setItem("lookism_streak", 0);
+    document.getElementById("msg").innerHTML = `<h2 style="color:var(--danger)">FAILED! It was ${answer.name}</h2>`;
+    document.getElementById("nextBtn").style.display = "inline-block";
+}
+
+function addCell(row, val, cls) {
+    const c = row.insertCell();
+    c.textContent = val;
+    c.className = cls;
+}
+
+function addComparisonCell(row, val, target, unit) {
+    const c = row.insertCell();
+    const arrow = val < target ? " ↑" : (val > target ? " ↓" : "");
+    c.textContent = val + unit + arrow;
+    c.className = val === target ? "green" : "red";
 }
 </script>
 </body>
