@@ -2,200 +2,70 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Lookismdle - Dual Name Edition</title>
+<title>Lookismdle - Boss Rush Edition</title>
 <style>
-    :root {
-        --bg: #0b0e11;
-        --surface: #1a1d21;
-        --primary: #3498db;
-        --correct: #27ae60;
-        --partial: #f1c40f;
-        --wrong: #c0392b;
-        --danger: #e74c3c;
-        --text: #ffffff;
-        --border: #333;
-    }
+:root {
+  --bg: #0b0e11;
+  --surface: #1a1d21;
+  --primary: #3498db;
+  --correct: #27ae60;
+  --partial: #f1c40f;
+  --wrong: #c0392b;
+  --danger: #e74c3c;
+  --text: #ffffff;
+}
 
-    * { box-sizing: border-box; }
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'Inter', sans-serif;
+  text-align: center;
+  margin: 0;
+  padding: 10px;
+}
 
-    body {
-        background: var(--bg);
-        color: var(--text);
-        font-family: 'Inter', system-ui, -apple-system, sans-serif;
-        text-align: center;
-        margin: 0;
-        padding: 0;
-        min-height: 100vh;
-        padding-bottom: 50px;
-    }
+/* UI Elements */
+.header-box { padding: 20px; background: var(--surface); border-bottom: 3px solid var(--primary); margin-bottom: 20px; }
+.streak-tag { color: var(--partial); font-weight: 800; font-size: 1.2rem; }
+.mode-indicator { 
+    display: inline-block; 
+    padding: 5px 15px; 
+    border-radius: 20px; 
+    font-size: 0.8rem; 
+    font-weight: bold; 
+    margin-top: 10px;
+    background: #444;
+}
+.boss-mode { background: var(--danger) !important; animation: pulse 2s infinite; }
 
-    /* HEADER */
-    .header-box { 
-        padding: 20px; 
-        background: var(--surface); 
-        border-bottom: 3px solid var(--primary); 
-        margin-bottom: 20px; 
-        box-shadow: 0 4px 15px rgba(0,0,0,0.5);
-    }
+@keyframes pulse {
+    0% { box-shadow: 0 0 0 0 rgba(231, 76, 60, 0.4); }
+    70% { box-shadow: 0 0 0 10px rgba(231, 76, 60, 0); }
+    100% { box-shadow: 0 0 0 0 rgba(231, 76, 60, 0); }
+}
 
-    h1 { margin: 10px 0; font-weight: 900; letter-spacing: 1px; }
+/* Buttons and Inputs */
+.search-container { position: relative; display: flex; justify-content: center; gap: 10px; max-width: 600px; margin: 0 auto 30px; }
+input { padding: 12px; border-radius: 8px; border: none; width: 70%; background: #2c3136; color: white; }
+.btn { cursor: pointer; border: none; border-radius: 8px; font-weight: bold; padding: 10px 20px; text-transform: uppercase; }
+.btn-guess { background: var(--primary); color: white; }
+.btn-next { background: var(--correct); color: white; display: none; }
+.btn-mode { background: #555; color: white; margin-bottom: 10px; }
 
-    .streak-tag { color: var(--partial); font-weight: 800; font-size: 1.1rem; margin-bottom: 5px; }
+/* Table */
+table { margin: 0 auto; border-spacing: 5px; width: 100%; max-width: 1200px; }
+td { padding: 15px 5px; font-size: 11px; font-weight: bold; border-radius: 5px; color: white; }
+.green { background: var(--correct); }
+.yellow { background: var(--partial); color: #000; } /* Partial match */
+.red { background: var(--wrong); }
 
-    /* MODES */
-    .mode-btn-container {
-        display: flex; 
-        justify-content: center; 
-        gap: 8px; 
-        flex-wrap: wrap; 
-        margin: 15px 0;
-    }
-
-    .btn-mode { 
-        background: #444; 
-        color: #ccc; 
-        font-size: 0.75rem; 
-        padding: 8px 12px;
-        transition: 0.2s;
-        border: 1px solid #555;
-    }
-    .btn-mode:hover { background: #555; color: white; }
-    .btn-mode.active { border-color: var(--primary); color: white; background: #2c3e50; }
-
-    .mode-indicator { 
-        display: inline-block; 
-        padding: 6px 18px; 
-        border-radius: 20px; 
-        font-size: 0.85rem; 
-        font-weight: bold; 
-        margin-top: 10px;
-        background: var(--surface);
-        border: 1px solid #444;
-    }
-    .boss-mode { background: var(--danger) !important; color: white; animation: pulse 2s infinite; border: none; }
-    .style-mode { background: #8e44ad !important; color: white; border: none; }
-
-    @keyframes pulse {
-        0% { box-shadow: 0 0 0 0 rgba(231, 76, 60, 0.4); }
-        70% { box-shadow: 0 0 0 10px rgba(231, 76, 60, 0); }
-        100% { box-shadow: 0 0 0 0 rgba(231, 76, 60, 0); }
-    }
-
-    /* HINTS */
-    .style-hint { 
-        font-size: 1.4rem; 
-        color: #8e44ad; 
-        font-weight: 900; 
-        margin: 15px 0; 
-        text-transform: uppercase; 
-        background: rgba(142, 68, 173, 0.1);
-        display: inline-block;
-        padding: 10px 20px;
-        border-radius: 8px;
-        border: 1px solid #8e44ad;
-    }
-
-    /* SEARCH AREA */
-    .search-wrapper {
-        position: relative;
-        max-width: 600px;
-        margin: 0 auto 20px;
-        padding: 0 10px;
-        display: flex;
-        gap: 8px;
-    }
-
-    input { 
-        flex: 1;
-        padding: 14px; 
-        border-radius: 8px; 
-        border: 1px solid var(--border); 
-        background: #2c3136; 
-        color: white; 
-        font-size: 1rem;
-        outline: none;
-    }
-    input:focus { border-color: var(--primary); }
-
-    .btn { cursor: pointer; border: none; border-radius: 8px; font-weight: bold; padding: 0 20px; text-transform: uppercase; font-size: 0.9rem; }
-    .btn-guess { background: var(--primary); color: white; }
-    .btn-guess:hover { background: #2980b9; }
-
-    .btn-next { 
-        background: var(--correct); 
-        color: white; 
-        display: none; 
-        padding: 15px 30px; 
-        font-size: 1.2rem;
-        margin: 20px auto;
-        box-shadow: 0 0 15px rgba(39, 174, 96, 0.4);
-    }
-
-    /* SUGGESTIONS */
-    #suggestions {
-        position: absolute; 
-        top: 100%; 
-        left: 10px; 
-        right: 10px; /* Matches padding of wrapper */
-        background: #222; 
-        z-index: 100; 
-        border-radius: 0 0 8px 8px;
-        max-height: 250px; 
-        overflow-y: auto; 
-        display: none;
-        border: 1px solid var(--border);
-        box-shadow: 0 10px 20px rgba(0,0,0,0.8);
-    }
-    .sug-item { 
-        padding: 12px; 
-        text-align: left; 
-        cursor: pointer; 
-        border-bottom: 1px solid #333; 
-        font-size: 0.95rem; 
-        color: #ddd;
-    }
-    .sug-item:hover { background: var(--primary); color: white; }
-
-    /* TABLE */
-    .table-container {
-        overflow-x: auto;
-        padding: 0 10px;
-        margin-top: 20px;
-    }
-    
-    table { 
-        margin: 0 auto; 
-        border-spacing: 4px; 
-        border-collapse: separate;
-        width: 100%; 
-        max-width: 1200px; 
-        white-space: nowrap;
-    }
-    
-    th { padding: 10px; font-size: 0.8rem; color: #aaa; text-transform: uppercase; letter-spacing: 1px; }
-    
-    td { 
-        padding: 15px 10px; 
-        font-size: 0.9rem; 
-        font-weight: bold; 
-        border-radius: 4px; 
-        color: white; 
-        text-shadow: 0 1px 2px rgba(0,0,0,0.5);
-        animation: flipIn 0.5s ease;
-    }
-
-    @keyframes flipIn {
-        from { transform: rotateX(90deg); opacity: 0; }
-        to { transform: rotateX(0); opacity: 1; }
-    }
-
-    /* COLOR CODING */
-    .green { background: var(--correct); }
-    .yellow { background: var(--partial); color: #000; text-shadow: none; }
-    .red { background: var(--wrong); }
-
-    #msg { min-height: 20px; margin-top: 10px; font-weight: bold; font-size: 1.2rem; }
+#suggestions {
+  position: absolute; top: 100%; left: 10%; width: 60%; 
+  background: var(--surface); z-index: 10; border-radius: 0 0 8px 8px;
+  max-height: 200px; overflow-y: auto; display: none;
+}
+.sug-item { padding: 10px; text-align: left; cursor: pointer; border-bottom: 1px solid #333; }
+.sug-item:hover { background: #333; }
 </style>
 </head>
 <body>
@@ -203,165 +73,154 @@
 <div class="header-box">
     <div class="streak-tag">🔥 STREAK: <span id="streakVal">0</span></div>
     <h1>LOOKISMDLE</h1>
-    
-    <div class="mode-btn-container">
-        <button class="btn btn-mode" onclick="setMode('classic')">Classic</button>
-        <button class="btn btn-mode" onclick="setMode('boss')">Boss Rush</button>
-        <button class="btn btn-mode" onclick="setMode('style')">Style Mastery</button>
-    </div>
-
-    <div id="modeTag" class="mode-indicator">Classic Mode</div>
-    
-    <div id="styleHintArea" class="style-hint" style="display:none;">
-        STYLE: <span id="styleName">?</span>
-    </div>
-    
-    <div id="guessCounter" style="display:none; margin-top:10px; font-weight:bold; color:var(--danger);">
-        BOSS RUSH: <span id="countVal">5</span> Guesses Left
-    </div>
+    <button class="btn btn-mode" onclick="toggleMode()">Switch to <span id="modeName">Boss Rush</span> Mode</button>
+    <div id="modeTag" class="mode-indicator">Classic Mode (Unlimited Guesses)</div>
+    <div id="guessCounter" style="display:none; margin-top:10px;">Guesses Left: <span id="countVal">5</span></div>
 </div>
 
-<div class="search-wrapper">
-    <input type="text" id="charSearch" placeholder="Type character name..." autocomplete="off">
+<div class="search-container">
+    <input type="text" id="charSearch" placeholder="Enter English or Korean name..." autocomplete="off">
     <div id="suggestions"></div>
     <button class="btn btn-guess" onclick="makeGuess()">Guess</button>
 </div>
 
 <div id="msg"></div>
-<button class="btn btn-next" id="nextBtn" onclick="nextRound()">Next Round</button>
+<button class="btn btn-next" id="nextBtn" onclick="location.reload()">Next Round</button>
 
-<div class="table-container">
-    <table>
-        <thead>
-            <tr>
-                <th>Character</th>
-                <th>Gen</th>
-                <th>Height</th>
-                <th>Hometown</th>
-                <th>Affiliation</th>
-                <th>Style</th>
-                <th>Hair</th>
-                <th>Age</th>
-            </tr>
-        </thead>
-        <tbody id="tableBody"></tbody>
-    </table>
-</div>
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Gen</th>
+            <th>Height</th>
+            <th>Hometown</th>
+            <th>Affiliation</th>
+            <th>Style</th>
+            <th>Age</th>
+        </tr>
+    </thead>
+    <tbody id="tableBody"></tbody>
+</table>
 
 <script>
-/* FULL CHARACTER DATABASE */
+// Logic: Former Affiliations add the "Yellow" partial match
 const characters = [
-  {name:"Daniel Park / Park Hyung Suk", gen:"Gen 2", height:181, hometown:"Seoul", aff:"Allied", former:["Workers"], style:"Copy", hair:"Black", age:19},
-  {name:"Johan Seong / Seong Yo Han", gen:"Gen 2", height:179, hometown:"Seoul", aff:"None", former:["God Dog", "Big Deal", "Workers"], style:"Copy", hair:"Brown", age:19},
-  {name:"Eli Jang / Jang Hyun", gen:"Gen 2", height:182, hometown:"Seoul", aff:"Hostel", former:["Workers"], style:"Wildness", hair:"Black", age:19},
-  {name:"Zack Lee / Lee Jin Sung", gen:"Gen 2", height:185, hometown:"Seoul", aff:"Allied", former:["None"], style:"Boxing", hair:"Black", age:19},
-  {name:"Samuel Seo / Seo Seong Eun", gen:"Gen 2", height:195, hometown:"Seoul", aff:"Workers", former:["Big Deal"], style:"Brawling", hair:"Black", age:20},
-  {name:"Sinu Han / Han Shin Woo", gen:"Gen 1", height:184, hometown:"Seoul", aff:"Big Deal", former:["Workers"], style:"IA", hair:"Black", age:22},
-  {name:"Jake Kim / Kim Gi Myeong", gen:"Gen 2", height:194, hometown:"Seoul", aff:"Big Deal", former:["None"], style:"MMA", hair:"Black", age:19},
-  {name:"Gun Park / Jong Gun", gen:"Gen 1", height:190, hometown:"Tokyo", aff:"HNH Group", former:["Magami Family"], style:"Kyokushin", hair:"Black", age:20},
-  {name:"Vasco / Lee Eun Tae", gen:"Gen 2", height:183, hometown:"Seoul", aff:"Burn Knuckles", former:["Allied"], style:"Muay Thai", hair:"Black", age:19},
-  {name:"Hudson Ahn / Ahn Hyun Sung", gen:"Gen 2", height:178, hometown:"Ansan", aff:"Allied", former:["Ansan"], style:"Punching", hair:"Blonde", age:20},
-  {name:"James Lee / Lee Ji Hoon", gen:"Gen 1", height:188, hometown:"Seoul", aff:"HNH Group", former:["Seoul"], style:"IA", hair:"Pink", age:23},
-  {name:"Goo Kim / Kim Joon Goo", gen:"Gen 1", height:190, hometown:"Seoul", aff:"Secret Friends", former:["HNH Group"], style:"Weapons", hair:"Blonde", age:20},
-  {name:"Jerry Kwon / Kwon Ji Tae", gen:"Gen 2", height:215, hometown:"Seoul", aff:"Big Deal", former:["None"], style:"Boxing", hair:"Bald", age:19},
-  {name:"Vin Jin / Jin Ho Bin", gen:"Gen 2", height:180, hometown:"Cheonliang", aff:"Allied", former:["Cheonliang Fam"], style:"Ssireum", hair:"Black", age:19},
-  {name:"Jay Hong / Hong Jae Yeol", gen:"Gen 2", height:182, hometown:"Seoul", aff:"Allied", former:["None"], style:"Systema", hair:"Blonde", age:19},
-  {name:"Warren Chae / Chae Won Seok", gen:"Gen 2", height:187, hometown:"Seoul", aff:"Hostel", former:["None"], style:"CQC", hair:"Black", age:20},
-  {name:"Yuseong / Yoo Sung", gen:"Gen 2", height:173, hometown:"Seoul", aff:"Workers", former:["None"], style:"Instinct", hair:"Black", age:19},
-  {name:"Mandeok Bang / Bang Man Deok", gen:"Gen 2", height:210, hometown:"Seoul", aff:"Workers", former:["None"], style:"Capoeira", hair:"Black", age:20},
-  {name:"Ryuhei Kuroda / Kuroda Ryuhei", gen:"Gen 2", height:184, hometown:"Kanto", aff:"Workers", former:["Magami Family"], style:"Kagiroi", hair:"Blonde", age:20},
-  {name:"Xiaolung / Syaorong", gen:"Gen 2", height:200, hometown:"China", aff:"Workers", former:["None"], style:"Staff", hair:"Black", age:20},
-  {name:"Tom Lee / Lee Do Gyu", gen:"Gen 0", height:213, hometown:"Seoul", aff:"WTJC", former:["Fist Gang"], style:"Wildness", hair:"Gray", age:50},
-  {name:"Jinyoung Park / Park Jin Young", gen:"Gen 0", height:191, hometown:"Seoul", aff:"Workers", former:["Fist Gang"], style:"Copy", hair:"Black", age:50},
-  {name:"Elite / Charles Choi", gen:"Gen 0", height:180, hometown:"Seoul", aff:"HNH Group", former:["Fist Gang"], style:"IA", hair:"Black", age:52},
-  {name:"Gapryong Kim / Kim Gap Ryong", gen:"Gen 0", height:189, hometown:"Seoul", aff:"Fist Gang", former:["None"], style:"Overcoming", hair:"Black", age:48},
-  {name:"Manager Kim / Kim Bu Jang", gen:"Gen 0", height:178, hometown:"Namhae", aff:"WTJC", former:["White Tiger"], style:"CQC", hair:"Black", age:48},
-  {name:"Jincheol Park / Park Jin Cheol", gen:"Gen 0", height:195, hometown:"Seoul", aff:"Ares", former:["Military"], style:"CQC", hair:"Black", age:45},
-  {name:"Hansu Seong / Seong Han Soo", gen:"Gen 0", height:182, hometown:"Seoul", aff:"Military", former:["None"], style:"Taekwondo", hair:"Brown", age:44},
-  {name:"Jichang Kwak / Kwak Ji Chang", gen:"Gen 1", height:192, hometown:"Seoul", aff:"Seoul", former:["Chungcheong"], style:"Hand Chop", hair:"Black", age:24},
-  {name:"Taesoo Ma / Ma Tae Soo", gen:"Gen 1", height:191, hometown:"Ansan", aff:"Ansan", former:["None"], style:"Punching", hair:"Red", age:24},
-  {name:"Gongseob Ji / Ji Gong Seob", gen:"Gen 1", height:188, hometown:"Daegu", aff:"Daegu", former:["None"], style:"Boxing", hair:"Bald", age:24},
-  {name:"Seokdu Wang / Wang Seok Du", gen:"Gen 1", height:185, hometown:"Suwon", aff:"Suwon", former:["None"], style:"Headbutt", hair:"Black", age:25},
-  {name:"Logan Lee / Lee Tae Sung", gen:"Gen 2", height:203, hometown:"Seoul", aff:"Workers", former:["None"], style:"Jiu-Jitsu", hair:"Black", age:19},
-  {name:"Crystal Choi / Choi Soo Jung", gen:"Gen 2", height:171, hometown:"Seoul", aff:"HNH Group", former:["None"], style:"Boxing", hair:"Black", age:19},
-  {name:"Mary Kim / Kim Mi Jin", gen:"Gen 2", height:165, hometown:"Cheonliang", aff:"None", former:["Cheonliang Fam"], style:"Judo", hair:"Blonde", age:19},
-  {name:"Lineman / Im Dae Gil", gen:"Gen 2", height:175, hometown:"Seoul", aff:"Big Deal", former:["None"], style:"Brawling", hair:"Black", age:19},
-  {name:"Jason Yoon / Yoon Jae Hee", gen:"Gen 2", height:180, hometown:"Seoul", aff:"Big Deal", former:["None"], style:"Taekwondo", hair:"Black", age:19},
-  {name:"Brad Lee / Lee Geon Woo", gen:"Gen 2", height:191, hometown:"Seoul", aff:"Big Deal", former:["None"], style:"Brawling", hair:"Black", age:19},
-  {name:"Olly Wang / Wang Oh Chun", gen:"Gen 2", height:182, hometown:"Seoul", aff:"Hostel", former:["None"], style:"Wildness", hair:"Black", age:19},
-  {name:"Max Kang / Kang Seok", gen:"Gen 2", height:182, hometown:"Seoul", aff:"Hostel", former:["None"], style:"Wrestling", hair:"Black", age:19},
-  {name:"Derek Han / Han Gyeol", gen:"Gen 2", height:181, hometown:"Seoul", aff:"Hostel", former:["None"], style:"Wrestling", hair:"Black", age:19},
-  {name:"Jiho Park / Park Ji Ho", gen:"Gen 2", height:172, hometown:"Seoul", aff:"None", former:["Workers"], style:"Brawling", hair:"Black", age:19},
-  {name:"Jin Jang / Jang Jin", gen:"Gen 2", height:176, hometown:"Seoul", aff:"Workers", former:["K House"], style:"Tactics", hair:"Black", age:20},
-  {name:"Kenta Magami / Magami Kenta", gen:"Gen 2", height:171, hometown:"Kanto", aff:"Workers", former:["Magami Family"], style:"Kyokushin", hair:"Black", age:19},
-  {name:"Kazuma Sato / Sato Kazuma", gen:"Gen 2", height:210, hometown:"Japan", aff:"Workers", former:["None"], style:"Sumo", hair:"Bald", age:22},
-  {name:"Hyotoko / Onigawara", gen:"Gen 2", height:195, hometown:"Japan", aff:"Workers", former:["None"], style:"Sumo", hair:"Bald", age:23},
-  {name:"Old Face / Noh An", gen:"Gen 2", height:185, hometown:"Seoul", aff:"Workers", former:["Big Deal"], style:"Brawling", hair:"Black", age:24},
-  {name:"Beolgu Lee / Lee Beol Gu", gen:"Gen 0", height:179, hometown:"Seoul", aff:"Fist Gang", former:["None"], style:"Lying", hair:"Black", age:50},
-  {name:"Jibeom Kwak / Kwak Ji Beom", gen:"Gen 2", height:188, hometown:"Chungcheong", aff:"Allied", former:["Chungcheong"], style:"Hand Chop", hair:"Black", age:19},
-  {name:"Jihan Kwak / Kwak Ji Han", gen:"Gen 2", height:190, hometown:"Chungcheong", aff:"Allied", former:["Chungcheong"], style:"Hand Chop", hair:"Black", age:19},
-  {name:"Taejin Cheon / Cheon Tae Jin", gen:"Gen 2", height:189, hometown:"Cheonliang", aff:"Workers", former:["Cheonliang Fam"], style:"Kudo", hair:"Blonde", age:21},
-  {name:"Lua Im / Im Lua", gen:"Gen 2", height:165, hometown:"Seoul", aff:"Big Deal", former:["None"], style:"Tactics", hair:"Black", age:19},
-  {name:"Jacky Lee / Lee Jae Kyun", gen:"Gen 2", height:179, hometown:"Ansan", aff:"Ansan", former:["None"], style:"Kyokushin", hair:"Purple", age:19},
-  {name:"Channing Choi / Choi Chang Hee", gen:"Gen 2", height:184, hometown:"Ansan", aff:"Ansan", former:["None"], style:"Brawling", hair:"Black", age:19},
-  {name:"James Gong / Gong Young Hoon", gen:"Gen 2", height:178, hometown:"Seoul", aff:"None", former:["Hostel"], style:"Brawling", hair:"Black", age:19},
-  {name:"Hope Park / Park Heemang", gen:"Gen 2", height:190, hometown:"Seoul", aff:"Workers", former:["None"], style:"Brawling", hair:"Bald", age:21},
-  {name:"Ivan Park / Park Ivan", gen:"Gen 2", height:188, hometown:"Seoul", aff:"Workers", former:["None"], style:"Brawling", hair:"Bald", age:21},
-  {name:"Seongjun Baek / Baek Seong Jun", gen:"Gen 1", height:183, hometown:"Japan", aff:"Workers", former:["Yakuza"], style:"Judo", hair:"Black", age:24},
-  {name:"Brekdak", gen:"Gen 0", height:180, hometown:"Thailand", aff:"Burn Knuckles", former:["None"], style:"Muay Thai", hair:"Black", age:35},
-  {name:"Sophia / Sophia Alexander", gen:"Gen 0", height:195, hometown:"Russia", aff:"HNH Group", former:["Military"], style:"Systema", hair:"Blonde", age:38},
-  {name:"Kitae Kim / Kim Ki Tae", gen:"Gen 1", height:192, hometown:"Seoul", aff:"Mexico", former:["Seoul"], style:"Wildness", hair:"Black", age:26},
-  {name:"Kojima Shigeaki", gen:"Gen 0", height:185, hometown:"Japan", aff:"Charles Choi", former:["Yakuza"], style:"Kudo", hair:"Black", age:48},
-  {name:"Kojima Hiroaki", gen:"Gen 0", height:185, hometown:"Japan", aff:"Charles Choi", former:["Yakuza"], style:"Kudo", hair:"Black", age:48},
-  {name:"Baekho Kwon / Kwon Baek Ho", gen:"Gen 0", height:215, hometown:"Seoul", aff:"Fist Gang", former:["None"], style:"Boxing", hair:"Bald", age:45},
-  {name:"Basement Hulk / No. 1", gen:"Gen 2", height:230, hometown:"Seoul", aff:"Workers", former:["None"], style:"Wildness", hair:"Bald", age:25},
-  {name:"Hangyeol Baek / Baek Han Gyeol", gen:"Gen 2", height:185, hometown:"Seoul", aff:"Workers", former:["None"], style:"Tactics", hair:"Black", age:20},
-  {name:"Suhyeon Kim / Kim Su Hyeon", gen:"Gen 2", height:178, hometown:"Seoul", aff:"Questism", former:["None"], style:"MMA", hair:"Black", age:18},
-  {name:"Gukja Yang / Yang Guk Ja", gen:"Gen 2", height:188, hometown:"Seoul", aff:"Questism", former:["None"], style:"Kyokushin", hair:"Black", age:18},
-  {name:"Haru Seong / Seong Haru", gen:"Gen 2", height:168, hometown:"Seoul", aff:"Questism", former:["None"], style:"Copy", hair:"Brown", age:18},
-  {name:"Hajun Gu / Gu Ha Jun", gen:"Gen 2", height:182, hometown:"Seoul", aff:"Questism", former:["None"], style:"Boxing", hair:"Black", age:18},
-  {name:"Seongyoon Lee / Lee Seong Yoon", gen:"Gen 2", height:175, hometown:"Seoul", aff:"Questism", former:["None"], style:"Brawling", hair:"Black", age:18},
-  {name:"Daniel (Questism) / Kang Seok", gen:"Gen 2", height:191, hometown:"Seoul", aff:"Questism", former:["None"], style:"Aikido", hair:"White", age:19},
-  {name:"Choyun / Jo Yun", gen:"Gen 2", height:185, hometown:"Seoul", aff:"Questism", former:["None"], style:"Systema", hair:"Black", age:19},
-  {name:"Zoe Park / Park Ha Neul", gen:"Gen 2", height:163, hometown:"Seoul", aff:"None", former:["None"], style:"None", hair:"Black", age:19},
-  {name:"Sally Park / Park Se Rim", gen:"Gen 2", height:165, hometown:"Seoul", aff:"Hostel", former:["None"], style:"None", hair:"Black", age:19},
-  {name:"Mira Kim / Kim Mi Ra", gen:"Gen 2", height:168, hometown:"Seoul", aff:"None", former:["None"], style:"None", hair:"Brown", age:19},
-  {name:"Duke Pyeon / Pyeon Deok Hwa", gen:"Gen 2", height:165, hometown:"Seoul", aff:"None", former:["None"], style:"None", hair:"Black", age:19},
-  {name:"Joy Hong / Hong Jae Hye", gen:"Gen 2", height:162, hometown:"Seoul", aff:"None", former:["None"], style:"None", hair:"Blonde", age:17}
+  {name:"Daniel Park / Park Hyung Suk", gen:"Gen 2", height:181, hometown:"Seoul", aff:"Allied", former:["Workers"], style:"Copy", age:19},
+  {name:"Johan Seong / Seong Yo Han", gen:"Gen 2", height:179, hometown:"Seoul", aff:"None", former:["God Dog", "Big Deal", "Workers"], style:"Copy", age:19},
+  {name:"Eli Jang / Jang Hyun", gen:"Gen 2", height:182, hometown:"Seoul", aff:"Hostel", former:["Workers"], style:"Wildness", age:19},
+  {name:"Zack Lee / Lee Jin Sung", gen:"Gen 2", height:185, hometown:"Seoul", aff:"Allied", former:["None"], style:"Boxing", age:19},
+  {name:"Samuel Seo / Seo Seong Eun", gen:"Gen 2", height:195, hometown:"Seoul", aff:"Workers", former:["Big Deal"], style:"Brawling", age:20},
+  {name:"Sinu Han / Han Shin Woo", gen:"Gen 1", height:184, hometown:"Seoul", aff:"Big Deal", former:["Workers"], style:"IA", age:22},
+  {name:"Jake Kim / Kim Gi Myeong", gen:"Gen 2", height:194, hometown:"Seoul", aff:"Big Deal", former:["None"], style:"MMA", age:19},
+  {name:"Gun Park / Jong Gun", gen:"Gen 1", height:190, hometown:"Tokyo", aff:"HNH Group", former:["Magami Family"], style:"Kyokushin", age:20},
+  {name:"Vasco / Lee Eun Tae", gen:"Gen 2", height:183, hometown:"Seoul", aff:"Burn Knuckles", former:["Allied"], style:"Muay Thai", age:19},
+  {name:"Hudson Ahn / Ahn Hyun Sung", gen:"Gen 2", height:178, hometown:"Ansan", aff:"Allied", former:["Ansan"], style:"Punching", age:20}
+  // ... more characters follow the same structure
 ];
 
-// LocalStorage Helper to prevent crashes if disabled
-function getStorage(key, def) {
-    try {
-        return localStorage.getItem(key) || def;
-    } catch(e) { return def; }
-}
-
-function setStorage(key, val) {
-    try {
-        localStorage.setItem(key, val);
-    } catch(e) {}
-}
-
-let streak = parseInt(getStorage("lookism_streak", "0"));
-let currentMode = getStorage("lookism_mode", "classic");
+let streak = localStorage.getItem("lookism_streak") || 0;
+let isBossMode = localStorage.getItem("lookism_mode") === "boss";
 let guessesLeft = 5;
 let gameActive = true;
-let answer;
+const answer = characters[Math.floor(Math.random() * characters.length)];
 
-function initGame() {
-    // Mode Logic
-    if (currentMode === 'style') {
-        // Filter out chars with no style
-        const validChars = characters.filter(c => c.style !== "None");
-        answer = validChars[Math.floor(Math.random() * validChars.length)];
-        document.getElementById("styleHintArea").style.display = "block";
-        document.getElementById("styleName").textContent = answer.style;
-    } else {
-        answer = characters[Math.floor(Math.random() * characters.length)];
-        document.getElementById("styleHintArea").style.display = "none";
+document.getElementById("streakVal").textContent = streak;
+updateModeUI();
+
+function toggleMode() {
+    isBossMode = !isBossMode;
+    localStorage.setItem("lookism_mode", isBossMode ? "boss" : "classic");
+    location.reload();
+}
+
+function updateModeUI() {
+    const tag = document.getElementById("modeTag");
+    const name = document.getElementById("modeName");
+    const counter = document.getElementById("guessCounter");
+    if(isBossMode) {
+        tag.textContent = "BOSS RUSH MODE (5 Guesses)";
+        tag.classList.add("boss-mode");
+        name.textContent = "Classic";
+        counter.style.display = "block";
     }
+}
 
-    document.getElementById("streakVal").textContent = streak;
-    updateModeUI();
-    console.log("Answer loaded (Secret):", a
+const input = document.getElementById("charSearch");
+const sugBox = document.getElementById("suggestions");
+
+input.oninput = () => {
+    const val = input.value.toLowerCase();
+    sugBox.innerHTML = "";
+    if(!val) { sugBox.style.display = "none"; return; }
+    const filtered = characters.filter(c => c.name.toLowerCase().includes(val));
+    filtered.forEach(c => {
+        const d = document.createElement("div");
+        d.className = "sug-item";
+        d.textContent = c.name;
+        d.onclick = () => { input.value = c.name; sugBox.style.display = "none"; };
+        sugBox.appendChild(d);
+    });
+    sugBox.style.display = filtered.length ? "block" : "none";
+};
+
+function makeGuess() {
+    if(!gameActive) return;
+    const g = characters.find(c => c.name.toLowerCase() === input.value.toLowerCase());
+    if(!g) return;
+
+    const row = document.getElementById("tableBody").insertRow(0);
+    
+    // Check Affiliation for Partial Match (Yellow)
+    let affClass = "red";
+    if (g.aff === answer.aff) affClass = "green";
+    else if (answer.former.includes(g.aff) || g.former.includes(answer.aff)) affClass = "yellow";
+
+    addCell(row, g.name, g.name === answer.name ? "green" : "red");
+    addCell(row, g.gen, g.gen === answer.gen ? "green" : "red");
+    addComparisonCell(row, g.height, answer.height, "cm");
+    addCell(row, g.hometown, g.hometown === answer.hometown ? "green" : "red");
+    addCell(row, g.aff, affClass);
+    addCell(row, g.style, g.style === answer.style ? "green" : "red");
+    addComparisonCell(row, g.age, answer.age, "");
+
+    input.value = "";
+    
+    if(g.name === answer.name) {
+        winGame();
+    } else if(isBossMode) {
+        guessesLeft--;
+        document.getElementById("countVal").textContent = guessesLeft;
+        if(guessesLeft <= 0) loseGame();
+    }
+}
+
+function winGame() {
+    gameActive = false;
+    streak++;
+    localStorage.setItem("lookism_streak", streak);
+    document.getElementById("msg").innerHTML = `<h2 style="color:var(--correct)">VICTORY!</h2>`;
+    document.getElementById("nextBtn").style.display = "inline-block";
+}
+
+function loseGame() {
+    gameActive = false;
+    localStorage.setItem("lookism_streak", 0);
+    document.getElementById("msg").innerHTML = `<h2 style="color:var(--danger)">FAILED! It was ${answer.name}</h2>`;
+    document.getElementById("nextBtn").style.display = "inline-block";
+}
+
+function addCell(row, val, cls) {
+    const c = row.insertCell();
+    c.textContent = val;
+    c.className = cls;
+}
+
+function addComparisonCell(row, val, target, unit) {
+    const c = row.insertCell();
+    const arrow = val < target ? " ↑" : (val > target ? " ↓" : "");
+    c.textContent = val + unit + arrow;
+    c.className = val === target ? "green" : "red";
+}
+</script>
+</body>
+</html>
