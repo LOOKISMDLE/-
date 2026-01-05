@@ -33,6 +33,17 @@ body {
   border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
+/* Animations */
+@keyframes reveal {
+    0% { transform: rotateX(90deg); opacity: 0; }
+    100% { transform: rotateX(0deg); opacity: 1; }
+}
+
+.reveal-cell {
+    opacity: 0;
+    animation: reveal 0.4s ease forwards;
+}
+
 .mode-nav {
   display: flex;
   justify-content: center;
@@ -89,9 +100,10 @@ table { width: 100%; border-collapse: separate; border-spacing: 3px; margin-top:
 th { font-size: 9px; color: var(--primary); text-transform: uppercase; padding-bottom: 5px; }
 td { padding: 10px 2px; font-size: 11px; font-weight: bold; border-radius: 4px; overflow: hidden; word-wrap: break-word; vertical-align: middle; }
 
-.green { background: var(--correct); }
-.red { background: var(--wrong); }
-.gray { background: #34495e; }
+.green { background: var(--correct) !important; }
+.yellow { background: var(--partial) !important; color: black; }
+.red { background: var(--wrong) !important; }
+.gray { background: #34495e !important; }
 .arrow { font-size: 12px; margin-left: 2px; color: #fff; }
 
 #msg { font-weight: bold; margin: 15px; font-size: 1.1rem; min-height: 1.5em; }
@@ -125,11 +137,12 @@ td { padding: 10px 2px; font-size: 11px; font-weight: bold; border-radius: 4px; 
   </div>
 
   <div class="ui-row">
-    <input list="charList" id="guessInput" placeholder="Enter Name (English or Korean)...">
+    <input list="charList" id="guessInput" placeholder="Enter Name...">
     <datalist id="charList"></datalist>
     <button class="main-btn" onclick="submitGuess()">GUESS</button>
     <button class="main-btn" style="background:#e67e22" onclick="revealHint()">HINT</button>
     <button id="nextBtn" class="main-btn" style="background:var(--correct); display:none;" onclick="location.reload()">NEXT ROUND</button>
+    <button id="shareBtn" class="main-btn" style="background:#8e44ad; display:none;" onclick="shareResults()">SHARE RESULT 📋</button>
   </div>
 
   <div id="msg"></div>
@@ -153,65 +166,72 @@ td { padding: 10px 2px; font-size: 11px; font-weight: bold; border-radius: 4px; 
 </div>
 
 <script>
+// The chronological order of arcs for the arrow logic
+const arcOrder = [
+    "Prologue", "Eun-tae Lee", "Festival", "Illegal Gambling", "God Dog", "Hostel", "Jake Kim", 
+    "Vasco's Secret", "Daniel's Training", "One Night", "One Night III", "Workers (4th)", 
+    "Workers (3rd)", "Workers (2nd)", "Workers (1st)", "Holiday 2", "Hostel (Hunt for)", "Cheonliang"
+];
+
 const characters = [
-  { name: "Daniel Park / Park Hyung-seok", gen: "Gen 2", height: 181, hometown: "Seoul", affiliation: "Allied", style: "Copy", hair: "Black", age: 18, arc: "Prologue" },
-  { name: "Gun Park / Park Jong-gun", gen: "Gen 1", height: 190, hometown: "Japan", affiliation: "HNH", style: "UI", hair: "Black", age: 20, arc: "Festival" },
-  { name: "Goo Kim / Kim Jun-goo", gen: "Gen 1", height: 190, hometown: "Seoul", affiliation: "Secret Friends", style: "Weapons", hair: "Blonde", age: 20, arc: "Eun-tae Lee" },
-  { name: "Jake Kim / Kim Gi-myeong", gen: "Gen 2", height: 194, hometown: "Seoul", affiliation: "Big Deal", style: "MMA", hair: "Black", age: 19, arc: "Illegal Gambling" },
-  { name: "Vasco / Lee Eun-tae", gen: "Gen 2", height: 183, hometown: "Seoul", affiliation: "Burn Knuckles", style: "Muay Thai", hair: "Black", age: 18, arc: "Eun-tae Lee" },
-  { name: "Johan Seong / Seong Yo-han", gen: "Gen 2", height: 179, hometown: "Gangbuk", affiliation: "None", style: "Copy", hair: "Brown", age: 18, arc: "God Dog" },
-  { name: "Zack Lee / Lee Jin-seong", gen: "Gen 2", height: 185, hometown: "Seoul", affiliation: "Allied", style: "Boxing", hair: "Black", age: 18, arc: "Prologue" },
-  { name: "Eli Jang / Jang Hyeon", gen: "Gen 2", height: 182, hometown: "Seoul", affiliation: "Hostel", style: "Wild", hair: "Black", age: 19, arc: "Eli Jang" },
-  { name: "Samuel Seo / Seo Seong-eun", gen: "Gen 2", height: 195, hometown: "Seoul", affiliation: "Workers", style: "Brute", hair: "Black", age: 19, arc: "Workers (4th)" },
-  { name: "Jay Hong / Hong Jae-yeol", gen: "Gen 2", height: 184, hometown: "Seoul", affiliation: "Allied", style: "Systema", hair: "Blonde", age: 18, arc: "Prologue" },
-  { name: "Sinu Han / Han Shin-woo", gen: "Gen 1", height: 184, hometown: "Gangseo", affiliation: "Big Deal", style: "IA", hair: "Black", age: 21, arc: "Jake Kim" },
-  { name: "James Lee / Lee Ji-hoon", gen: "Gen 1", height: 188, hometown: "Seoul", affiliation: "HNH", style: "IA", hair: "Pink", age: 22, arc: "One Night" },
-  { name: "Tom Lee / Lee Do-gyu", gen: "Gen 0", height: 210, hometown: "Seoul", affiliation: "WTJC", style: "Wild", hair: "Gray", age: 48, arc: "Workers (4th)" },
-  { name: "Manager Kim / Kim Bu-jang", gen: "Gen 0", height: 180, hometown: "N. Korea", affiliation: "WTJC", style: "CQC", hair: "Black", age: 45, arc: "Workers (4th)" },
-  { name: "Jichang Kwak / Kwak Ji-chang", gen: "Gen 1", height: 192, hometown: "Chungcheong", affiliation: "None", style: "Hand Chop", hair: "Black", age: 21, arc: "Holiday 2" },
-  { name: "Taesoo Ma / Ma Tae-soo", gen: "Gen 1", height: 191, hometown: "Ansan", affiliation: "Ansan", style: "Fist", hair: "Red", age: 24, arc: "One Night III" },
-  { name: "Vin Jin / Jin Ho-bin", gen: "Gen 2", height: 182, hometown: "Cheonliang", affiliation: "Allied", style: "Judo", hair: "Black", age: 18, arc: "Prologue" },
-  { name: "Hudson Ahn / Ahn Hyeon-seong", gen: "Gen 2", height: 178, hometown: "Ansan", affiliation: "Allied", style: "Fist", hair: "Blonde", age: 18, arc: "One Night III" },
-  { name: "Jerry Kwon / Kwon Ji-tae", gen: "Gen 2", height: 198, hometown: "Seoul", affiliation: "Big Deal", style: "Boxing", hair: "Bald", age: 19, arc: "Illegal Gambling" },
-  { name: "Mandeok Bang / Bang Man-deok", gen: "Gen 2", height: 202, hometown: "Seoul", affiliation: "Workers", style: "Capoeira", hair: "Black", age: 20, arc: "Workers (3rd)" },
-  { name: "Yoosung / Yu-seong", gen: "Gen 2", height: 178, hometown: "Seoul", affiliation: "Workers", style: "Instinct", hair: "Black", age: 20, arc: "Workers (3rd)" },
-  { name: "Ryuhei Kuroda / Kuroda Ryuhei", gen: "Gen 2", height: 183, hometown: "Japan", affiliation: "Workers", style: "Kagiroi", hair: "Blonde", age: 20, arc: "Workers (2nd)" },
-  { name: "Xiaolung / Shaorong", gen: "Gen 2", height: 190, hometown: "China", affiliation: "Workers", style: "Staff", hair: "Black", age: 20, arc: "Workers (3rd)" },
-  { name: "Gitae Kim / Kim Gi-tae", gen: "Gen 1", height: 196, hometown: "Seoul", affiliation: "Mexico", style: "Brute", hair: "Black", age: 26, arc: "Cheonliang" },
-  { name: "Gapryong Kim / Kim Gap-ryong", gen: "Gen 0", height: 195, hometown: "Seoul", affiliation: "Fist Gang", style: "MMA", hair: "Black", age: 46, arc: "Jake Kim" },
-  { name: "Jinyoung Park / Park Jin-young", gen: "Gen 0", height: 183, hometown: "Seoul", affiliation: "Workers", style: "Copy", hair: "Black", age: 48, arc: "Jake Kim" },
-  { name: "Charles Choi / Choi Dong-soo", gen: "Gen 0", height: 185, hometown: "Seoul", affiliation: "HNH", style: "IA", hair: "Black", age: 55, arc: "Festival" },
-  { name: "Beolgu Lee / Lee Beol-gu", gen: "Gen 1", height: 178, hometown: "Seoul", affiliation: "None", style: "Lying", hair: "Black", age: 25, arc: "Cheonliang" },
-  { name: "Gongseob Ji / Ji Gong-seob", gen: "Gen 1", height: 187, hometown: "Daegu", affiliation: "Daegu", style: "Boxing", hair: "Bald", age: 24, arc: "Holiday 2" },
-  { name: "Seokdu Wang / Wang Seok-du", gen: "Gen 1", height: 185, hometown: "Suwon", affiliation: "Suwon", style: "Headbutt", hair: "Black", age: 25, arc: "Hostel (Hunt for)" },
-  { name: "Taejin Cheon / Cheon Tae-jin", gen: "Gen 2", height: 188, hometown: "Cheonliang", affiliation: "Workers", style: "Ssireum", hair: "Blonde", age: 21, arc: "Workers (1st)" },
-  { name: "Jihan Kwak / Kwak Ji-han", gen: "Gen 2", height: 189, hometown: "Chungcheong", affiliation: "Allied", style: "Hand Chop", hair: "Black", age: 20, arc: "Holiday 2" },
-  { name: "Jibeom Kwak / Kwak Ji-beom", gen: "Gen 2", height: 188, hometown: "Chungcheong", affiliation: "Allied", style: "Hand Chop", hair: "Black", age: 20, arc: "Holiday 2" },
-  { name: "Warren Chae / Chae Won-seok", gen: "Gen 2", height: 188, hometown: "Seoul", affiliation: "Hostel", style: "CQC", hair: "Black", age: 19, arc: "Hostel" },
-  { name: "Mary Kim / Kim Mi-jin", gen: "Gen 2", height: 165, hometown: "Cheonliang", affiliation: "Burn Knuckles", style: "Judo", hair: "Blonde", age: 18, arc: "Prologue" },
-  { name: "Logan Lee / Lee Tae-seong", gen: "Gen 2", height: 192, hometown: "Seoul", affiliation: "Workers", style: "Jiu-Jitsu", hair: "Blonde", age: 18, arc: "Prologue" },
-  { name: "Olly Wang / Wang Oh-chun", gen: "Gen 2", height: 184, hometown: "Seoul", affiliation: "Hostel", style: "None", hair: "Black", age: 19, arc: "Hostel" },
-  { name: "Crystal Choi / Choi Soo-jung", gen: "Gen 2", height: 168, hometown: "Seoul", affiliation: "HNH", style: "Aikido", hair: "Black", age: 18, arc: "Prologue" },
-  { name: "Eugene / Yu-jin", gen: "Gen 2", height: 175, hometown: "Seoul", affiliation: "Workers", style: "None", hair: "Black", age: 18, arc: "Workers (4th)" },
-  { name: "Hangyeol Baek / Baek Han-gyeol", gen: "Gen 2", height: 176, hometown: "Seoul", affiliation: "Workers", style: "Medical", hair: "Black", age: 22, arc: "Workers (1st)" },
-  { name: "Kenta Magami / Magami Kenta", gen: "Gen 2", height: 172, hometown: "Japan", affiliation: "Workers", style: "Karate", hair: "Black", age: 19, arc: "Workers (2nd)" },
-  { name: "Brad Lee / Lee Geon-woo", gen: "Gen 2", height: 191, hometown: "Seoul", affiliation: "Big Deal", style: "Boxing", hair: "Black", age: 19, arc: "Jake Kim" },
-  { name: "Jason Yoon / Yoon Jae-hui", gen: "Gen 2", height: 180, hometown: "Seoul", affiliation: "Big Deal", style: "Taekwondo", hair: "Black", age: 19, arc: "Jake Kim" },
-  { name: "Lineman / Im Gyeong-buk", gen: "Gen 2", height: 177, hometown: "Seoul", affiliation: "Big Deal", style: "Combat", hair: "Black", age: 19, arc: "Jake Kim" },
-  { name: "Jacky Lee / Lee Jin-yong", gen: "Gen 2", height: 179, hometown: "Ansan", affiliation: "Ansan", style: "Kickboxing", hair: "Purple", age: 20, arc: "One Night III" },
-  { name: "Channing Choi / Choi Chang-won", gen: "Gen 2", height: 184, hometown: "Ansan", affiliation: "Ansan", style: "Street", hair: "Black", age: 20, arc: "One Night III" },
-  { name: "Koji / Ko-ji", gen: "Gen 2", height: 168, hometown: "Seoul", affiliation: "HNH", style: "Hacking", hair: "Black", age: 17, arc: "Festival" },
-  { name: "Jiho Park / Park Ji-ho", gen: "Gen 2", height: 171, hometown: "Seoul", affiliation: "None", style: "Dirty", hair: "Black", age: 19, arc: "Prologue" },
-  { name: "Jace Park / Park Beom-jae", gen: "Gen 2", height: 187, hometown: "Seoul", affiliation: "Burn Knuckles", style: "Muay Thai", hair: "Black", age: 18, arc: "Eun-tae Lee" },
-  { name: "Chuck Kwak / Kwak Paeng-gwi", gen: "Gen 2", height: 184, hometown: "Seoul", affiliation: "Hostel", style: "MMA", hair: "Black", age: 21, arc: "Hostel" },
-  { name: "Justin Peng / Peng Gwan", gen: "Gen 2", height: 185, hometown: "Seoul", affiliation: "Hostel", style: "MMA", hair: "Black", age: 21, arc: "Hostel" },
-  { name: "Max Kang / Kang Ju-chan", gen: "Gen 2", height: 182, hometown: "Seoul", affiliation: "Hostel", style: "Wrestling", hair: "Black", age: 20, arc: "Hostel" },
-  { name: "Derek Han / Han Jae-hui", gen: "Gen 2", height: 181, hometown: "Seoul", affiliation: "Hostel", style: "Wrestling", hair: "Black", age: 20, arc: "Hostel" },
-  { name: "Jin Jang / Jang Jin", gen: "Gen 2", height: 178, hometown: "Seoul", affiliation: "Workers", style: "Analysis", hair: "Black", age: 20, arc: "God Dog" },
-  { name: "Scott Kwon / Kwon Seung-ryong", gen: "Gen 2", height: 188, hometown: "Seoul", affiliation: "God Dog", style: "MMA", hair: "Black", age: 20, arc: "God Dog" },
-  { name: "Dominic Min / Min Dong-an", gen: "Gen 2", height: 185, hometown: "Seoul", affiliation: "Workers", style: "Wrestling", hair: "Black", age: 20, arc: "Workers (4th)" },
-  { name: "Brekdak", gen: "Gen 1", height: 175, hometown: "Thailand", affiliation: "Burn Knuckles", style: "Muay Thai", hair: "Black", age: 32, arc: "Vasco's Secret" },
-  { name: "Sophia Alexander", gen: "Gen 0", height: 198, hometown: "Russia", affiliation: "HNH", style: "Systema", hair: "Blonde", age: 35, arc: "Daniel's Training" }
+  { name: "Daniel Park / Park Hyung-seok", gen: "Gen 2", height: 181, hometown: "Seoul", affiliation: "Allied", formerAffiliations: ["Workers", "HNH"], style: "Copy", hair: "Black", age: 18, arc: "Prologue" },
+  { name: "Gun Park / Park Jong-gun", gen: "Gen 1", height: 190, hometown: "Japan", affiliation: "HNH", formerAffiliations: ["Magami Family"], style: "UI", hair: "Black", age: 20, arc: "Festival" },
+  { name: "Goo Kim / Kim Jun-goo", gen: "Gen 1", height: 190, hometown: "Seoul", affiliation: "Secret Friends", formerAffiliations: ["HNH"], style: "Weapons", hair: "Blonde", age: 20, arc: "Eun-tae Lee" },
+  { name: "Jake Kim / Kim Gi-myeong", gen: "Gen 2", height: 194, hometown: "Seoul", affiliation: "Big Deal", formerAffiliations: ["Workers"], style: "MMA", hair: "Black", age: 19, arc: "Illegal Gambling" },
+  { name: "Vasco / Lee Eun-tae", gen: "Gen 2", height: 183, hometown: "Seoul", affiliation: "Burn Knuckles", formerAffiliations: ["Allied"], style: "Muay Thai", hair: "Black", age: 18, arc: "Eun-tae Lee" },
+  { name: "Johan Seong / Seong Yo-han", gen: "Gen 2", height: 179, hometown: "Gangbuk", affiliation: "None", formerAffiliations: ["God Dog", "Allied", "White Tiger Forces"], style: "Copy", hair: "Brown", age: 18, arc: "God Dog" },
+  { name: "Zack Lee / Lee Jin-seong", gen: "Gen 2", height: 185, hometown: "Seoul", affiliation: "Allied", formerAffiliations: ["None"], style: "Boxing", hair: "Black", age: 18, arc: "Prologue" },
+  { name: "Eli Jang / Jang Hyeon", gen: "Gen 2", height: 182, hometown: "Seoul", affiliation: "Hostel", formerAffiliations: ["Workers", "HNH"], style: "Wild", hair: "Black", age: 19, arc: "Eli Jang" },
+  { name: "Samuel Seo / Seo Seong-eun", gen: "Gen 2", height: 195, hometown: "Seoul", affiliation: "Workers", formerAffiliations: ["Big Deal", "Secret Friends"], style: "Brute", hair: "Black", age: 19, arc: "Workers (4th)" },
+  { name: "Jay Hong / Hong Jae-yeol", gen: "Gen 2", height: 184, hometown: "Seoul", affiliation: "Allied", formerAffiliations: ["None"], style: "Systema", hair: "Blonde", age: 18, arc: "Prologue" },
+  { name: "Sinu Han / Han Shin-woo", gen: "Gen 1", height: 184, hometown: "Gangseo", affiliation: "Big Deal", formerAffiliations: ["Workers"], style: "IA", hair: "Black", age: 21, arc: "Jake Kim" },
+  { name: "James Lee / Lee Ji-hoon", gen: "Gen 1", height: 188, hometown: "Seoul", affiliation: "HNH", formerAffiliations: ["None"], style: "IA", hair: "Pink", age: 22, arc: "One Night" },
+  { name: "Tom Lee / Lee Do-gyu", gen: "Gen 0", height: 210, hometown: "Seoul", affiliation: "WTJC", formerAffiliations: ["Fist Gang"], style: "Wild", hair: "Gray", age: 48, arc: "Workers (4th)" },
+  { name: "Manager Kim / Kim Bu-jang", gen: "Gen 0", height: 180, hometown: "N. Korea", affiliation: "WTJC", formerAffiliations: ["Ares"], style: "CQC", hair: "Black", age: 45, arc: "Workers (4th)" },
+  { name: "Jichang Kwak / Kwak Ji-chang", gen: "Gen 1", height: 192, hometown: "Chungcheong", affiliation: "None", formerAffiliations: ["Seoul King"], style: "Hand Chop", hair: "Black", age: 21, arc: "Holiday 2" },
+  { name: "Taesoo Ma / Ma Tae-soo", gen: "Gen 1", height: 191, hometown: "Ansan", affiliation: "Ansan", formerAffiliations: ["None"], style: "Fist", hair: "Red", age: 24, arc: "One Night III" },
+  { name: "Vin Jin / Jin Ho-bin", gen: "Gen 2", height: 182, hometown: "Cheonliang", affiliation: "Allied", formerAffiliations: ["Cheonliang Fam"], style: "Judo", hair: "Black", age: 18, arc: "Prologue" },
+  { name: "Hudson Ahn / Ahn Hyeon-seong", gen: "Gen 2", height: 178, hometown: "Ansan", affiliation: "Allied", formerAffiliations: ["Ansan"], style: "Fist", hair: "Blonde", age: 18, arc: "One Night III" },
+  { name: "Jerry Kwon / Kwon Ji-tae", gen: "Gen 2", height: 198, hometown: "Seoul", affiliation: "Big Deal", formerAffiliations: ["Workers"], style: "Boxing", hair: "Bald", age: 19, arc: "Illegal Gambling" },
+  { name: "Mandeok Bang / Bang Man-deok", gen: "Gen 2", height: 202, hometown: "Seoul", affiliation: "Workers", formerAffiliations: ["None"], style: "Capoeira", hair: "Black", age: 20, arc: "Workers (3rd)" },
+  { name: "Yoosung / Yu-seong", gen: "Gen 2", height: 178, hometown: "Seoul", affiliation: "Workers", formerAffiliations: ["None"], style: "Instinct", hair: "Black", age: 20, arc: "Workers (3rd)" },
+  { name: "Ryuhei Kuroda / Kuroda Ryuhei", gen: "Gen 2", height: 183, hometown: "Japan", affiliation: "Workers", formerAffiliations: ["Magami Family"], style: "Kagiroi", hair: "Blonde", age: 20, arc: "Workers (2nd)" },
+  { name: "Xiaolung / Shaorong", gen: "Gen 2", height: 190, hometown: "China", affiliation: "Workers", formerAffiliations: ["Vivi's Family"], style: "Staff", hair: "Black", age: 20, arc: "Workers (3rd)" },
+  { name: "Gitae Kim / Kim Gi-tae", gen: "Gen 1", height: 196, hometown: "Seoul", affiliation: "Mexico", formerAffiliations: ["Seoul King"], style: "Brute", hair: "Black", age: 26, arc: "Cheonliang" },
+  { name: "Gapryong Kim / Kim Gap-ryong", gen: "Gen 0", height: 195, hometown: "Seoul", affiliation: "Fist Gang", formerAffiliations: ["None"], style: "MMA", hair: "Black", age: 46, arc: "Jake Kim" },
+  { name: "Jinyoung Park / Park Jin-young", gen: "Gen 0", height: 183, hometown: "Seoul", affiliation: "Workers", formerAffiliations: ["Fist Gang"], style: "Copy", hair: "Black", age: 48, arc: "Jake Kim" },
+  { name: "Charles Choi / Choi Dong-soo", gen: "Gen 0", height: 185, hometown: "Seoul", affiliation: "HNH", formerAffiliations: ["Fist Gang"], style: "IA", hair: "Black", age: 55, arc: "Festival" },
+  { name: "Beolgu Lee / Lee Beol-gu", gen: "Gen 1", height: 178, hometown: "Seoul", affiliation: "None", formerAffiliations: ["0 Gen"], style: "Lying", hair: "Black", age: 25, arc: "Cheonliang" },
+  { name: "Gongseob Ji / Ji Gong-seob", gen: "Gen 1", height: 187, hometown: "Daegu", affiliation: "Daegu", formerAffiliations: ["None"], style: "Boxing", hair: "Bald", age: 24, arc: "Holiday 2" },
+  { name: "Seokdu Wang / Wang Seok-du", gen: "Gen 1", height: 185, hometown: "Suwon", affiliation: "Suwon", formerAffiliations: ["None"], style: "Headbutt", hair: "Black", age: 25, arc: "Hostel (Hunt for)" },
+  { name: "Taejin Cheon / Cheon Tae-jin", gen: "Gen 2", height: 188, hometown: "Cheonliang", affiliation: "Workers", formerAffiliations: ["Cheonliang Fam"], style: "Ssireum", hair: "Blonde", age: 21, arc: "Workers (1st)" },
+  { name: "Jihan Kwak / Kwak Ji-han", gen: "Gen 2", height: 189, hometown: "Chungcheong", affiliation: "Allied", formerAffiliations: ["None"], style: "Hand Chop", hair: "Black", age: 20, arc: "Holiday 2" },
+  { name: "Jibeom Kwak / Kwak Ji-beom", gen: "Gen 2", height: 188, hometown: "Chungcheong", affiliation: "Allied", formerAffiliations: ["None"], style: "Hand Chop", hair: "Black", age: 20, arc: "Holiday 2" },
+  { name: "Warren Chae / Chae Won-seok", gen: "Gen 2", height: 188, hometown: "Seoul", affiliation: "Hostel", formerAffiliations: ["Workers"], style: "CQC", hair: "Black", age: 19, arc: "Hostel" },
+  { name: "Mary Kim / Kim Mi-jin", gen: "Gen 2", height: 165, hometown: "Cheonliang", affiliation: "Burn Knuckles", formerAffiliations: ["Cheonliang Fam"], style: "Judo", hair: "Blonde", age: 18, arc: "Prologue" },
+  { name: "Logan Lee / Lee Tae-seong", gen: "Gen 2", height: 192, hometown: "Seoul", affiliation: "Workers", formerAffiliations: ["Hostel"], style: "Jiu-Jitsu", hair: "Black", age: 18, arc: "Prologue" },
+  { name: "Olly Wang / Wang Oh-chun", gen: "Gen 2", height: 184, hometown: "Seoul", affiliation: "Hostel", formerAffiliations: ["None"], style: "None", hair: "Black", age: 19, arc: "Hostel" },
+  { name: "Crystal Choi / Choi Soo-jung", gen: "Gen 2", height: 168, hometown: "Seoul", affiliation: "HNH", formerAffiliations: ["None"], style: "Aikido", hair: "Black", age: 18, arc: "Prologue" },
+  { name: "Eugene / Yu-jin", gen: "Gen 2", height: 175, hometown: "Seoul", affiliation: "Workers", formerAffiliations: ["None"], style: "None", hair: "Black", age: 18, arc: "Workers (4th)" },
+  { name: "Hangyeol Baek / Baek Han-gyeol", gen: "Gen 2", height: 176, hometown: "Seoul", affiliation: "Workers", formerAffiliations: ["None"], style: "Medical", hair: "Black", age: 22, arc: "Workers (1st)" },
+  { name: "Kenta Magami / Magami Kenta", gen: "Gen 2", height: 172, hometown: "Japan", affiliation: "Workers", formerAffiliations: ["Magami Family"], style: "Karate", hair: "Black", age: 19, arc: "Workers (2nd)" },
+  { name: "Brad Lee / Lee Geon-woo", gen: "Gen 2", height: 191, hometown: "Seoul", affiliation: "Big Deal", formerAffiliations: ["None"], style: "Boxing", hair: "Black", age: 19, arc: "Jake Kim" },
+  { name: "Jason Yoon / Yoon Jae-hui", gen: "Gen 2", height: 180, hometown: "Seoul", affiliation: "Big Deal", formerAffiliations: ["None"], style: "Taekwondo", hair: "Black", age: 19, arc: "Jake Kim" },
+  { name: "Lineman / Im Gyeong-buk", gen: "Gen 2", height: 177, hometown: "Seoul", affiliation: "Big Deal", formerAffiliations: ["None"], style: "Combat", hair: "Black", age: 19, arc: "Jake Kim" },
+  { name: "Jacky Lee / Lee Jin-yong", gen: "Gen 2", height: 179, hometown: "Ansan", affiliation: "Ansan", formerAffiliations: ["None"], style: "Kickboxing", hair: "Purple", age: 20, arc: "One Night III" },
+  { name: "Channing Choi / Choi Chang-won", gen: "Gen 2", height: 184, hometown: "Ansan", affiliation: "Ansan", formerAffiliations: ["None"], style: "Street", hair: "Black", age: 20, arc: "One Night III" },
+  { name: "Koji / Ko-ji", gen: "Gen 2", height: 168, hometown: "Seoul", affiliation: "HNH", formerAffiliations: ["None"], style: "Hacking", hair: "Black", age: 17, arc: "Festival" },
+  { name: "Jiho Park / Park Ji-ho", gen: "Gen 2", height: 171, hometown: "Seoul", affiliation: "None", formerAffiliations: ["Backdoor"], style: "Dirty", hair: "Black", age: 19, arc: "Prologue" },
+  { name: "Jace Park / Park Beom-jae", gen: "Gen 2", height: 187, hometown: "Seoul", affiliation: "Burn Knuckles", formerAffiliations: ["None"], style: "Muay Thai", hair: "Black", age: 18, arc: "Eun-tae Lee" },
+  { name: "Chuck Kwak / Kwak Paeng-gwi", gen: "Gen 2", height: 184, hometown: "Seoul", affiliation: "Hostel", formerAffiliations: ["Workers"], style: "MMA", hair: "Black", age: 21, arc: "Hostel" },
+  { name: "Justin Peng / Peng Gwan", gen: "Gen 2", height: 185, hometown: "Seoul", affiliation: "Hostel", formerAffiliations: ["Workers"], style: "MMA", hair: "Black", age: 21, arc: "Hostel" },
+  { name: "Max Kang / Kang Ju-chan", gen: "Gen 2", height: 182, hometown: "Seoul", affiliation: "Hostel", formerAffiliations: ["None"], style: "Wrestling", hair: "Black", age: 20, arc: "Hostel" },
+  { name: "Derek Han / Han Jae-hui", gen: "Gen 2", height: 181, hometown: "Seoul", affiliation: "Hostel", formerAffiliations: ["None"], style: "Wrestling", hair: "Black", age: 20, arc: "Hostel" },
+  { name: "Jin Jang / Jang Jin", gen: "Gen 2", height: 178, hometown: "Seoul", affiliation: "Workers", formerAffiliations: ["God Dog"], style: "Analysis", hair: "Black", age: 20, arc: "God Dog" },
+  { name: "Scott Kwon / Kwon Seung-ryong", gen: "Gen 2", height: 188, hometown: "Seoul", affiliation: "God Dog", formerAffiliations: ["Workers"], style: "MMA", hair: "Black", age: 20, arc: "God Dog" },
+  { name: "Dominic Min / Min Dong-an", gen: "Gen 2", height: 185, hometown: "Seoul", affiliation: "Workers", formerAffiliations: ["Backdoor"], style: "Wrestling", hair: "Black", age: 20, arc: "Workers (4th)" },
+  { name: "Brekdak", gen: "Gen 1", height: 175, hometown: "Thailand", affiliation: "Burn Knuckles", formerAffiliations: ["None"], style: "Muay Thai", hair: "Black", age: 32, arc: "Vasco's Secret" },
+  { name: "Sophia Alexander", gen: "Gen 0", height: 198, hometown: "Russia", affiliation: "HNH", formerAffiliations: ["Ares"], style: "Systema", hair: "Blonde", age: 35, arc: "Daniel's Training" }
 ];
 
 let currentMode = localStorage.getItem("lk_mode") || "daily";
@@ -231,28 +251,25 @@ function updateCountdown() {
     const h = Math.floor(diff / 3600000);
     const m = Math.floor((diff % 3600000) / 60000);
     const s = Math.floor((diff % 60000) / 1000);
-    const timeString = `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
-    document.getElementById('timerVal').textContent = timeString;
+    document.getElementById('timerVal').textContent = `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
     if (diff <= 0) location.reload();
 }
 
 function init() {
-  const indicator = document.getElementById('modeIndicator');
   document.querySelectorAll('.mode-btn').forEach(btn => btn.classList.remove('active'));
   document.getElementById('btn-' + currentMode).classList.add('active');
+  const indicator = document.getElementById('modeIndicator');
 
   if (currentMode === "daily") {
     indicator.textContent = "DAILY CHALLENGE"; indicator.className = "mode-badge daily-mode";
     document.getElementById('dailyTimer').style.display = "block";
-    updateCountdown();
-    setInterval(updateCountdown, 1000);
+    updateCountdown(); setInterval(updateCountdown, 1000);
     target = getDailyTarget();
     document.getElementById('streakVal').textContent = localStorage.getItem("lk_daily_streak") || 0;
     const saved = JSON.parse(localStorage.getItem(todayKey) || "[]");
-    // Passing false to 'shouldUpdateStreak' so refreshing doesn't increment streak
     saved.forEach(name => {
         const char = characters.find(c => c.name === name);
-        if (char) processGuess(char, false, false);
+        if (char) processGuess(char, false, false, 0); 
     });
   } else if (currentMode === "boss") {
     indicator.textContent = "BOSS RUSH (5 LIVES)"; indicator.className = "mode-badge boss-mode";
@@ -275,8 +292,7 @@ function getDailyTarget() {
   const seed = new Date().toDateString();
   let hash = 0;
   for (let i = 0; i < seed.length; i++) hash = seed.charCodeAt(i) + ((hash << 5) - hash);
-  const index = Math.abs(hash) % characters.length;
-  return characters[index];
+  return characters[Math.abs(hash) % characters.length];
 }
 
 function submitGuess() {
@@ -285,11 +301,11 @@ function submitGuess() {
   const val = input.value.trim();
   const g = characters.find(c => c.name.toLowerCase() === val.toLowerCase());
   if (!g || guessedNames.includes(g.name)) return;
-  processGuess(g, true, true);
+  processGuess(g, true, true, 100);
   input.value = "";
 }
 
-function processGuess(g, shouldSave, shouldUpdateStreak) {
+function processGuess(g, shouldSave, shouldUpdateStreak, revealDelay) {
   guessedNames.push(g.name);
   if (shouldSave && currentMode === "daily") {
       const saved = JSON.parse(localStorage.getItem(todayKey) || "[]");
@@ -299,70 +315,86 @@ function processGuess(g, shouldSave, shouldUpdateStreak) {
 
   count++;
   document.getElementById('guessCount').textContent = count;
-
   const row = document.getElementById('history').insertRow(0);
-  addCell(row, g.name, g.name === target.name ? "green" : "gray");
-  addCell(row, g.gen, g.gen === target.gen ? "green" : "red");
   
-  const hCell = row.insertCell();
-  let hArrow = g.height < target.height ? " ↑" : (g.height > target.height ? " ↓" : "");
-  hCell.innerHTML = `${g.height}cm<span class="arrow">${hArrow}</span>`;
-  hCell.className = g.height === target.height ? "green" : "red";
+  // Logic for Arc Arrows
+  const guessArcIdx = arcOrder.indexOf(g.arc);
+  const targetArcIdx = arcOrder.indexOf(target.arc);
+  let arcArrow = "";
+  if (guessArcIdx < targetArcIdx) arcArrow = " ↑"; // Guessed arc is earlier than target
+  else if (guessArcIdx > targetArcIdx) arcArrow = " ↓"; // Guessed arc is later than target
 
-  addCell(row, g.hometown, g.hometown === target.hometown ? "green" : "red");
-  addCell(row, g.affiliation, g.affiliation === target.affiliation ? "green" : "red");
-  addCell(row, g.style, g.style === target.style ? "green" : "red");
-  addCell(row, g.hair, g.hair === target.hair ? "green" : "red");
-  
-  const ageCell = row.insertCell();
-  let aArrow = g.age < target.age ? " ↑" : (g.age > target.age ? " ↓" : "");
-  ageCell.innerHTML = `${g.age}<span class="arrow">${aArrow}</span>`;
-  ageCell.className = g.age === target.age ? "green" : "red";
+  const cellsData = [
+    { text: g.name, cls: g.name === target.name ? "green" : "gray" },
+    { text: g.gen, cls: g.gen === target.gen ? "green" : "red" },
+    { text: `${g.height}cm${g.height < target.height ? " ↑" : (g.height > target.height ? " ↓" : "")}`, cls: g.height === target.height ? "green" : "red" },
+    { text: g.hometown, cls: g.hometown === target.hometown ? "green" : "red" },
+    { text: g.affiliation, cls: g.affiliation === target.affiliation ? "green" : (target.formerAffiliations.includes(g.affiliation) ? "yellow" : "red") },
+    { text: g.style, cls: g.style === target.style ? "green" : "red" },
+    { text: g.hair, cls: g.hair === target.hair ? "green" : "red" },
+    { text: `${g.age}${g.age < target.age ? " ↑" : (g.age > target.age ? " ↓" : "")}`, cls: g.age === target.age ? "green" : "red" },
+    { text: `${g.arc}<span class="arrow">${arcArrow}</span>`, cls: g.arc === target.arc ? "green" : "red" }
+  ];
 
-  addCell(row, g.arc, g.arc === target.arc ? "green" : "red");
+  cellsData.forEach((data, i) => {
+    const c = row.insertCell();
+    c.innerHTML = data.text;
+    c.className = `reveal-cell ${data.cls}`;
+    c.style.animationDelay = `${i * revealDelay}ms`;
+  });
 
-  if (g.name === target.name) win(shouldUpdateStreak);
+  if (g.name === target.name) setTimeout(() => win(shouldUpdateStreak), cellsData.length * revealDelay);
   else if (currentMode === "boss") {
     lives--; document.getElementById('livesVal').textContent = lives;
-    if (lives <= 0) lose();
+    if (lives <= 0) setTimeout(lose, cellsData.length * revealDelay);
   }
-}
-
-function addCell(row, text, cls) {
-  const c = row.insertCell(); c.textContent = text; c.className = cls;
 }
 
 function win(shouldUpdateStreak) {
   gameOver = true;
   document.getElementById('msg').innerHTML = `<span style="color:var(--correct)">SUCCESS! It was ${target.name}</span>`;
   if (shouldUpdateStreak) updateStreak(true);
-  if (currentMode !== "daily") {
-    document.getElementById('nextBtn').style.display = "inline-block";
-  } else {
-    document.getElementById('msg').innerHTML += "<br>See you tomorrow for the next challenge!";
-  }
+  document.getElementById('shareBtn').style.display = "inline-block";
+  if (currentMode !== "daily") document.getElementById('nextBtn').style.display = "inline-block";
 }
 
 function lose() {
   gameOver = true;
   document.getElementById('msg').innerHTML = `<span style="color:var(--wrong)">GAME OVER! It was ${target.name}</span>`;
   updateStreak(false);
-  if (currentMode !== "daily") {
-    document.getElementById('nextBtn').style.display = "inline-block";
-  }
+  document.getElementById('shareBtn').style.display = "inline-block";
+  if (currentMode !== "daily") document.getElementById('nextBtn').style.display = "inline-block";
+}
+
+function shareResults() {
+    let grid = `LOOKISMDLE (${currentMode.toUpperCase()})\n`;
+    const rows = Array.from(document.querySelectorAll('#history tr')).reverse();
+    rows.forEach(row => {
+        const cells = Array.from(row.querySelectorAll('td'));
+        cells.forEach(cell => {
+            if (cell.classList.contains('green')) grid += "🟩";
+            else if (cell.classList.contains('yellow')) grid += "🟨";
+            else if (cell.classList.contains('red')) grid += "🟥";
+            else grid += "⬛";
+        });
+        grid += "\n";
+    });
+    
+    navigator.clipboard.writeText(grid).then(() => {
+        alert("Results copied to clipboard!");
+    });
 }
 
 function updateStreak(isWin) {
   const key = currentMode === "daily" ? "lk_daily_streak" : (currentMode === "boss" ? "lk_boss_streak" : "lk_inf_streak");
   let s = parseInt(localStorage.getItem(key) || 0);
-  if (isWin) s++; else s = 0;
+  s = isWin ? s + 1 : 0;
   localStorage.setItem(key, s);
   document.getElementById('streakVal').textContent = s;
 }
 
 function revealHint() {
-  const categories = ["gen", "hometown", "style", "hair", "affiliation", "arc"];
-  const cat = categories[Math.floor(Math.random() * categories.length)];
+  const cat = ["gen", "hometown", "style", "hair", "affiliation", "arc"][Math.floor(Math.random() * 6)];
   document.getElementById('msg').innerHTML = `HINT: Target's ${cat} is <span style="color:var(--partial)">${target[cat]}</span>`;
 }
 
