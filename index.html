@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>Lookismdle - Boss Rush Edition</title>
+<title>Lookismdle - Daily Edition</title>
 <style>
 :root {
   --bg: #0b0e11;
@@ -24,9 +24,8 @@ body {
   padding: 10px;
 }
 
-/* UI Elements */
 .header-box { padding: 20px; background: var(--surface); border-bottom: 3px solid var(--primary); margin-bottom: 20px; }
-.streak-tag { color: var(--partial); font-weight: 800; font-size: 1.2rem; }
+.streak-tag { color: var(--partial); font-weight: 800; font-size: 1.2rem; margin-bottom: 5px; }
 .mode-indicator { 
     display: inline-block; 
     padding: 5px 15px; 
@@ -37,6 +36,7 @@ body {
     background: #444;
 }
 .boss-mode { background: var(--danger) !important; animation: pulse 2s infinite; }
+.daily-mode { background: #9b59b6 !important; }
 
 @keyframes pulse {
     0% { box-shadow: 0 0 0 0 rgba(231, 76, 60, 0.4); }
@@ -47,11 +47,12 @@ body {
 .search-container { position: relative; display: flex; justify-content: center; gap: 10px; max-width: 700px; margin: 0 auto 30px; }
 input { padding: 12px; border-radius: 8px; border: none; width: 60%; background: #2c3136; color: white; }
 .btn { cursor: pointer; border: none; border-radius: 8px; font-weight: bold; padding: 10px 20px; text-transform: uppercase; transition: 0.2s; }
-.btn:hover { opacity: 0.8; }
 .btn-guess { background: var(--primary); color: white; }
 .btn-giveup { background: var(--wrong); color: white; } 
 .btn-next { background: var(--correct); color: white; display: none; }
-.btn-mode { background: #555; color: white; margin-bottom: 10px; }
+.btn-mode { background: #555; color: white; margin: 5px; font-size: 0.7rem; }
+
+#timer-box { font-size: 0.9rem; color: #aaa; margin-top: 10px; display: none; }
 
 table { margin: 0 auto; border-spacing: 5px; width: 100%; max-width: 1200px; }
 td { padding: 15px 5px; font-size: 11px; font-weight: bold; border-radius: 5px; color: white; }
@@ -71,15 +72,21 @@ td { padding: 15px 5px; font-size: 11px; font-weight: bold; border-radius: 5px; 
 <body>
 
 <div class="header-box">
-    <div class="streak-tag">🔥 STREAK: <span id="streakVal">0</span></div>
+    <div class="streak-tag">🔥 INFINITE STREAK: <span id="streakVal">0</span></div>
+    <div class="streak-tag" style="color: #9b59b6;">📅 DAILY STREAK: <span id="dailyStreakVal">0</span></div>
     <h1>LOOKISMDLE</h1>
-    <button class="btn btn-mode" onclick="toggleMode()">Switch to <span id="modeName">Boss Rush</span> Mode</button>
-    <div id="modeTag" class="mode-indicator">Classic Mode (Unlimited Guesses)</div>
+    <div>
+        <button class="btn btn-mode" onclick="setMode('classic')">Infinite Mode</button>
+        <button class="btn btn-mode" onclick="setMode('boss')">Boss Rush</button>
+        <button class="btn btn-mode" onclick="setMode('daily')">Daily Mode</button>
+    </div>
+    <div id="modeTag" class="mode-indicator">Mode</div>
+    <div id="timer-box">Next Daily in: <span id="timerVal">00:00:00</span></div>
     <div id="guessCounter" style="display:none; margin-top:10px;">Guesses Left: <span id="countVal">5</span></div>
 </div>
 
 <div class="search-container">
-    <input type="text" id="charSearch" placeholder="Enter English or Korean name..." autocomplete="off">
+    <input type="text" id="charSearch" placeholder="Enter name..." autocomplete="off">
     <div id="suggestions"></div>
     <button class="btn btn-guess" onclick="makeGuess()">Guess</button>
     <button class="btn btn-giveup" onclick="giveUp()">Give Up</button>
@@ -91,13 +98,7 @@ td { padding: 15px 5px; font-size: 11px; font-weight: bold; border-radius: 5px; 
 <table>
     <thead>
         <tr>
-            <th>Name</th>
-            <th>Gen</th>
-            <th>Height</th>
-            <th>Hometown</th>
-            <th>Affiliation</th>
-            <th>Style</th>
-            <th>Age</th>
+            <th>Name</th><th>Gen</th><th>Height</th><th>Hometown</th><th>Affiliation</th><th>Style</th><th>Age</th>
         </tr>
     </thead>
     <tbody id="tableBody"></tbody>
@@ -181,31 +182,73 @@ const characters = [
   {name:"Elite / Choi Dong Soo", gen:"Gen 0", height:185, hometown:"Seoul", aff:"HNH Group", former:["Fist Gang"], style:"IA", age:52}
 ];
 
-let streak = localStorage.getItem("lookism_streak") || 0;
-let isBossMode = localStorage.getItem("lookism_mode") === "boss";
-let guessesLeft = 5;
+let mode = localStorage.getItem("lookism_mode") || "classic";
+let streak = parseInt(localStorage.getItem("lookism_streak") || 0);
+let dailyStreak = parseInt(localStorage.getItem("lookism_daily_streak") || 0);
 let gameActive = true;
 let guessedNames = [];
-const answer = characters[Math.floor(Math.random() * characters.length)];
+let guessesLeft = 5;
+
+function getDailyAnswer() {
+    const today = new Date().toDateString();
+    let hash = 0;
+    for (let i = 0; i < today.length; i++) {
+        hash = ((hash << 5) - hash) + today.charCodeAt(i);
+        hash |= 0;
+    }
+    const index = Math.abs(hash) % characters.length;
+    return characters[index];
+}
+
+const answer = (mode === "daily") ? getDailyAnswer() : characters[Math.floor(Math.random() * characters.length)];
 
 document.getElementById("streakVal").textContent = streak;
-updateModeUI();
+document.getElementById("dailyStreakVal").textContent = dailyStreak;
+updateUI();
+startTimer();
 
-function toggleMode() {
-    isBossMode = !isBossMode;
-    localStorage.setItem("lookism_mode", isBossMode ? "boss" : "classic");
+function setMode(m) {
+    localStorage.setItem("lookism_mode", m);
     location.reload();
 }
 
-function updateModeUI() {
+function startTimer() {
+    function updateTimer() {
+        const now = new Date();
+        const nextDay = new Date();
+        nextDay.setHours(24, 0, 0, 0);
+        const diff = nextDay - now;
+
+        const h = Math.floor(diff / 3600000).toString().padStart(2, '0');
+        const m = Math.floor((diff % 3600000) / 60000).toString().padStart(2, '0');
+        const s = Math.floor((diff % 60000) / 1000).toString().padStart(2, '0');
+
+        document.getElementById("timerVal").textContent = `${h}:${m}:${s}`;
+    }
+    updateTimer();
+    setInterval(updateTimer, 1000);
+}
+
+function updateUI() {
     const tag = document.getElementById("modeTag");
-    const name = document.getElementById("modeName");
     const counter = document.getElementById("guessCounter");
-    if(isBossMode) {
+    const timerBox = document.getElementById("timer-box");
+    const nextBtn = document.getElementById("nextBtn");
+
+    if (mode === "boss") {
         tag.textContent = "BOSS RUSH MODE (5 Guesses)";
-        tag.classList.add("boss-mode");
-        name.textContent = "Classic";
+        tag.className = "mode-indicator boss-mode";
         counter.style.display = "block";
+    } else if (mode === "daily") {
+        tag.textContent = "DAILY MODE";
+        tag.className = "mode-indicator daily-mode";
+        timerBox.style.display = "block";
+        counter.style.display = "none";
+        nextBtn.textContent = "Come Back Tomorrow";
+    } else {
+        tag.textContent = "INFINITE MODE (Unlimited)";
+        tag.className = "mode-indicator";
+        counter.style.display = "none";
     }
 }
 
@@ -216,12 +259,7 @@ input.oninput = () => {
     const val = input.value.toLowerCase();
     sugBox.innerHTML = "";
     if(!val) { sugBox.style.display = "none"; return; }
-    
-    const filtered = characters.filter(c => 
-        c.name.toLowerCase().includes(val) && 
-        !guessedNames.includes(c.name)
-    );
-
+    const filtered = characters.filter(c => c.name.toLowerCase().includes(val) && !guessedNames.includes(c.name));
     filtered.forEach(c => {
         const d = document.createElement("div");
         d.className = "sug-item";
@@ -234,21 +272,12 @@ input.oninput = () => {
 
 function makeGuess() {
     if(!gameActive) return;
-    
     const g = characters.find(c => c.name.toLowerCase() === input.value.toLowerCase());
-    
-    if(!g) return;
-    if(guessedNames.includes(g.name)) {
-        input.value = "";
-        return;
-    }
+    if(!g || guessedNames.includes(g.name)) { input.value = ""; return; }
 
     guessedNames.push(g.name);
     const row = document.getElementById("tableBody").insertRow(0);
-    
-    let affClass = "red";
-    if (g.aff === answer.aff) affClass = "green";
-    else if (answer.former.includes(g.aff) || g.former.includes(answer.aff)) affClass = "yellow";
+    let affClass = (g.aff === answer.aff) ? "green" : (answer.former.includes(g.aff) || g.former.includes(answer.aff) ? "yellow" : "red");
 
     addCell(row, g.name, g.name === answer.name ? "green" : "red");
     addCell(row, g.gen, g.gen === answer.gen ? "green" : "red");
@@ -259,10 +288,8 @@ function makeGuess() {
     addComparisonCell(row, g.age, answer.age, "");
 
     input.value = "";
-    
-    if(g.name === answer.name) {
-        winGame();
-    } else if(isBossMode) {
+    if(g.name === answer.name) winGame();
+    else if(mode === "boss") {
         guessesLeft--;
         document.getElementById("countVal").textContent = guessesLeft;
         if(guessesLeft <= 0) loseGame();
@@ -271,24 +298,31 @@ function makeGuess() {
 
 function giveUp() {
     if(!gameActive) return;
-    if(confirm("Are you sure you want to give up? Streak will be reset.")) {
-        loseGame();
-    }
+    if(confirm("Give up and reset streak?")) loseGame();
 }
 
 function winGame() {
     gameActive = false;
-    streak++;
-    localStorage.setItem("lookism_streak", streak);
+    if(mode === "daily") {
+        dailyStreak++;
+        localStorage.setItem("lookism_daily_streak", dailyStreak);
+    } else {
+        streak++;
+        localStorage.setItem("lookism_streak", streak);
+    }
     document.getElementById("msg").innerHTML = `<h2 style="color:var(--correct)">VICTORY!</h2>`;
-    document.getElementById("nextBtn").style.display = "inline-block";
+    document.getElementById("nextBtn").style.display = mode === "daily" ? "none" : "inline-block";
 }
 
 function loseGame() {
     gameActive = false;
-    localStorage.setItem("lookism_streak", 0);
+    if(mode === "daily") {
+        localStorage.setItem("lookism_daily_streak", 0);
+    } else {
+        localStorage.setItem("lookism_streak", 0);
+    }
     document.getElementById("msg").innerHTML = `<h2 style="color:var(--danger)">FAILED! It was ${answer.name}</h2>`;
-    document.getElementById("nextBtn").style.display = "inline-block";
+    document.getElementById("nextBtn").style.display = mode === "daily" ? "none" : "inline-block";
     input.disabled = true;
 }
 
@@ -306,4 +340,4 @@ function addComparisonCell(row, val, target, unit) {
 }
 </script>
 </body>
-  </html>
+      </html>
