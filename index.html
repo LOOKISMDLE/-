@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>Lookismdle - Boss Rush Edition</title>
+<title>Lookismdle - Image Edition</title>
 <style>
 :root {
   --bg: #0b0e11;
@@ -24,39 +24,41 @@ body {
   padding: 10px;
 }
 
-/* UI Elements */
 .header-box { padding: 20px; background: var(--surface); border-bottom: 3px solid var(--primary); margin-bottom: 20px; }
 .streak-tag { color: var(--partial); font-weight: 800; font-size: 1.2rem; }
-.mode-indicator { 
-    display: inline-block; 
-    padding: 5px 15px; 
-    border-radius: 20px; 
-    font-size: 0.8rem; 
-    font-weight: bold; 
-    margin-top: 10px;
-    background: #444;
-}
-.boss-mode { background: var(--danger) !important; animation: pulse 2s infinite; }
 
-@keyframes pulse {
-    0% { box-shadow: 0 0 0 0 rgba(231, 76, 60, 0.4); }
-    70% { box-shadow: 0 0 0 10px rgba(231, 76, 60, 0); }
-    100% { box-shadow: 0 0 0 0 rgba(231, 76, 60, 0); }
+/* Image Styles */
+.reveal-img {
+    width: 150px;
+    height: 150px;
+    border-radius: 50%;
+    border: 4px solid var(--primary);
+    margin: 15px auto;
+    object-fit: cover;
+    display: none;
 }
 
-/* Buttons and Inputs */
+.table-portrait {
+    width: 40px;
+    height: 40px;
+    border-radius: 4px;
+    vertical-align: middle;
+    margin-right: 8px;
+    object-fit: cover;
+    background: #333;
+}
+
 .search-container { position: relative; display: flex; justify-content: center; gap: 10px; max-width: 600px; margin: 0 auto 30px; }
 input { padding: 12px; border-radius: 8px; border: none; width: 70%; background: #2c3136; color: white; }
+
 .btn { cursor: pointer; border: none; border-radius: 8px; font-weight: bold; padding: 10px 20px; text-transform: uppercase; }
 .btn-guess { background: var(--primary); color: white; }
-.btn-next { background: var(--correct); color: white; display: none; }
-.btn-mode { background: #555; color: white; margin-bottom: 10px; }
+.btn-next { background: var(--correct); color: white; display: none; margin-top: 10px; }
 
-/* Table */
 table { margin: 0 auto; border-spacing: 5px; width: 100%; max-width: 1200px; }
-td { padding: 15px 5px; font-size: 11px; font-weight: bold; border-radius: 5px; color: white; }
+td { padding: 12px 5px; font-size: 11px; font-weight: bold; border-radius: 5px; color: white; }
 .green { background: var(--correct); }
-.yellow { background: var(--partial); color: #000; } /* Partial match */
+.yellow { background: var(--partial); color: #000; }
 .red { background: var(--wrong); }
 
 #suggestions {
@@ -65,7 +67,6 @@ td { padding: 15px 5px; font-size: 11px; font-weight: bold; border-radius: 5px; 
   max-height: 200px; overflow-y: auto; display: none;
 }
 .sug-item { padding: 10px; text-align: left; cursor: pointer; border-bottom: 1px solid #333; }
-.sug-item:hover { background: #333; }
 </style>
 </head>
 <body>
@@ -73,24 +74,22 @@ td { padding: 15px 5px; font-size: 11px; font-weight: bold; border-radius: 5px; 
 <div class="header-box">
     <div class="streak-tag">🔥 STREAK: <span id="streakVal">0</span></div>
     <h1>LOOKISMDLE</h1>
-    <button class="btn btn-mode" onclick="toggleMode()">Switch to <span id="modeName">Boss Rush</span> Mode</button>
-    <div id="modeTag" class="mode-indicator">Classic Mode (Unlimited Guesses)</div>
-    <div id="guessCounter" style="display:none; margin-top:10px;">Guesses Left: <span id="countVal">5</span></div>
+    <div id="gameStatus"></div>
+    <img id="revealImage" class="reveal-img" src="" alt="Character Reveal">
+    <br>
+    <button class="btn btn-next" id="nextBtn" onclick="location.reload()">Next Round</button>
 </div>
 
 <div class="search-container">
-    <input type="text" id="charSearch" placeholder="Enter English or Korean name..." autocomplete="off">
+    <input type="text" id="charSearch" placeholder="Enter character name..." autocomplete="off">
     <div id="suggestions"></div>
-    <button class="btn btn-guess" onclick="makeGuess()">Guess</button>
+    <button class="btn btn-guess" id="guessBtn" onclick="makeGuess()">Guess</button>
 </div>
-
-<div id="msg"></div>
-<button class="btn btn-next" id="nextBtn" onclick="location.reload()">Next Round</button>
 
 <table>
     <thead>
         <tr>
-            <th>Name</th>
+            <th>Character</th>
             <th>Gen</th>
             <th>Height</th>
             <th>Hometown</th>
@@ -103,47 +102,21 @@ td { padding: 15px 5px; font-size: 11px; font-weight: bold; border-radius: 5px; 
 </table>
 
 <script>
-// Logic: Former Affiliations add the "Yellow" partial match
 const characters = [
-  {name:"Daniel Park / Park Hyung Suk", gen:"Gen 2", height:181, hometown:"Seoul", aff:"Allied", former:["Workers"], style:"Copy", age:19},
-  {name:"Johan Seong / Seong Yo Han", gen:"Gen 2", height:179, hometown:"Seoul", aff:"None", former:["God Dog", "Big Deal", "Workers"], style:"Copy", age:19},
-  {name:"Eli Jang / Jang Hyun", gen:"Gen 2", height:182, hometown:"Seoul", aff:"Hostel", former:["Workers"], style:"Wildness", age:19},
-  {name:"Zack Lee / Lee Jin Sung", gen:"Gen 2", height:185, hometown:"Seoul", aff:"Allied", former:["None"], style:"Boxing", age:19},
-  {name:"Samuel Seo / Seo Seong Eun", gen:"Gen 2", height:195, hometown:"Seoul", aff:"Workers", former:["Big Deal"], style:"Brawling", age:20},
-  {name:"Sinu Han / Han Shin Woo", gen:"Gen 1", height:184, hometown:"Seoul", aff:"Big Deal", former:["Workers"], style:"IA", age:22},
-  {name:"Jake Kim / Kim Gi Myeong", gen:"Gen 2", height:194, hometown:"Seoul", aff:"Big Deal", former:["None"], style:"MMA", age:19},
-  {name:"Gun Park / Jong Gun", gen:"Gen 1", height:190, hometown:"Tokyo", aff:"HNH Group", former:["Magami Family"], style:"Kyokushin", age:20},
-  {name:"Vasco / Lee Eun Tae", gen:"Gen 2", height:183, hometown:"Seoul", aff:"Burn Knuckles", former:["Allied"], style:"Muay Thai", age:19},
-  {name:"Hudson Ahn / Ahn Hyun Sung", gen:"Gen 2", height:178, hometown:"Ansan", aff:"Allied", former:["Ansan"], style:"Punching", age:20}
-  // ... more characters follow the same structure
+  {name:"Daniel Park", gen:"Gen 2", height:181, hometown:"Seoul", aff:"Allied", former:["Workers"], style:"Copy", age:19, img:"https://via.placeholder.com/150/0000FF/FFFFFF?text=Daniel"},
+  {name:"Johan Seong", gen:"Gen 2", height:179, hometown:"Seoul", aff:"None", former:["God Dog", "Big Deal", "Workers"], style:"Copy", age:19, img:"https://via.placeholder.com/150/8B4513/FFFFFF?text=Johan"},
+  {name:"Eli Jang", gen:"Gen 2", height:182, hometown:"Seoul", aff:"Hostel", former:["Workers"], style:"Wildness", age:19, img:"https://via.placeholder.com/150/000000/FFFFFF?text=Eli"},
+  {name:"Zack Lee", gen:"Gen 2", height:185, hometown:"Seoul", aff:"Allied", former:[], style:"Boxing", age:19, img:"https://via.placeholder.com/150/333333/FFFFFF?text=Zack"},
+  {name:"Gun Park", gen:"Gen 1", height:190, hometown:"Tokyo", aff:"HNH Group", former:[], style:"Kyokushin", age:20, img:"https://via.placeholder.com/150/FF0000/FFFFFF?text=Gun"},
+  {name:"Goo Kim", gen:"Gen 1", height:190, hometown:"Seoul", aff:"Secret Friends", former:[], style:"Weapons", age:20, img:"https://via.placeholder.com/150/FFFF00/000000?text=Goo"},
+  {name:"James Lee", gen:"Gen 1", height:188, hometown:"Seoul", aff:"HNH Group", former:[], style:"IA", age:23, img:"https://via.placeholder.com/150/FFC0CB/000000?text=James"}
 ];
 
 let streak = localStorage.getItem("lookism_streak") || 0;
-let isBossMode = localStorage.getItem("lookism_mode") === "boss";
-let guessesLeft = 5;
-let gameActive = true;
-const answer = characters[Math.floor(Math.random() * characters.length)];
-
 document.getElementById("streakVal").textContent = streak;
-updateModeUI();
 
-function toggleMode() {
-    isBossMode = !isBossMode;
-    localStorage.setItem("lookism_mode", isBossMode ? "boss" : "classic");
-    location.reload();
-}
-
-function updateModeUI() {
-    const tag = document.getElementById("modeTag");
-    const name = document.getElementById("modeName");
-    const counter = document.getElementById("guessCounter");
-    if(isBossMode) {
-        tag.textContent = "BOSS RUSH MODE (5 Guesses)";
-        tag.classList.add("boss-mode");
-        name.textContent = "Classic";
-        counter.style.display = "block";
-    }
-}
+const answer = characters[Math.floor(Math.random() * characters.length)];
+let gameActive = true;
 
 const input = document.getElementById("charSearch");
 const sugBox = document.getElementById("suggestions");
@@ -170,42 +143,44 @@ function makeGuess() {
 
     const row = document.getElementById("tableBody").insertRow(0);
     
-    // Check Affiliation for Partial Match (Yellow)
-    let affClass = "red";
-    if (g.aff === answer.aff) affClass = "green";
-    else if (answer.former.includes(g.aff) || g.former.includes(answer.aff)) affClass = "yellow";
+    // Name cell with Portrait
+    const nameCell = row.insertCell();
+    nameCell.innerHTML = `<img src="${g.img}" class="table-portrait"> ${g.name}`;
+    nameCell.className = g.name === answer.name ? "green" : "red";
 
-    addCell(row, g.name, g.name === answer.name ? "green" : "red");
+    // Other categories
     addCell(row, g.gen, g.gen === answer.gen ? "green" : "red");
     addComparisonCell(row, g.height, answer.height, "cm");
     addCell(row, g.hometown, g.hometown === answer.hometown ? "green" : "red");
+    
+    // Affiliation with Yellow logic
+    let affClass = "red";
+    if (g.aff === answer.aff) affClass = "green";
+    else if (answer.former.includes(g.aff) || g.former.includes(answer.aff)) affClass = "yellow";
     addCell(row, g.aff, affClass);
+
     addCell(row, g.style, g.style === answer.style ? "green" : "red");
     addComparisonCell(row, g.age, answer.age, "");
 
     input.value = "";
+    if(g.name === answer.name) endGame(true);
+}
+
+function endGame(won) {
+    gameActive = false;
+    document.getElementById("guessBtn").disabled = true;
+    const revealImg = document.getElementById("revealImage");
+    revealImg.src = answer.img;
+    revealImg.style.display = "block";
     
-    if(g.name === answer.name) {
-        winGame();
-    } else if(isBossMode) {
-        guessesLeft--;
-        document.getElementById("countVal").textContent = guessesLeft;
-        if(guessesLeft <= 0) loseGame();
+    if(won) {
+        streak++;
+        document.getElementById("gameStatus").innerHTML = `<h2 style="color:var(--correct)">VICTORY!</h2>`;
+    } else {
+        streak = 0;
+        document.getElementById("gameStatus").innerHTML = `<h2 style="color:var(--danger)">FAILED! It was ${answer.name}</h2>`;
     }
-}
-
-function winGame() {
-    gameActive = false;
-    streak++;
     localStorage.setItem("lookism_streak", streak);
-    document.getElementById("msg").innerHTML = `<h2 style="color:var(--correct)">VICTORY!</h2>`;
-    document.getElementById("nextBtn").style.display = "inline-block";
-}
-
-function loseGame() {
-    gameActive = false;
-    localStorage.setItem("lookism_streak", 0);
-    document.getElementById("msg").innerHTML = `<h2 style="color:var(--danger)">FAILED! It was ${answer.name}</h2>`;
     document.getElementById("nextBtn").style.display = "inline-block";
 }
 
