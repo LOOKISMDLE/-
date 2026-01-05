@@ -44,19 +44,19 @@ body {
     100% { box-shadow: 0 0 0 0 rgba(231, 76, 60, 0); }
 }
 
-/* Buttons and Inputs */
-.search-container { position: relative; display: flex; justify-content: center; gap: 10px; max-width: 600px; margin: 0 auto 30px; }
-input { padding: 12px; border-radius: 8px; border: none; width: 70%; background: #2c3136; color: white; }
-.btn { cursor: pointer; border: none; border-radius: 8px; font-weight: bold; padding: 10px 20px; text-transform: uppercase; }
+.search-container { position: relative; display: flex; justify-content: center; gap: 10px; max-width: 700px; margin: 0 auto 30px; }
+input { padding: 12px; border-radius: 8px; border: none; width: 60%; background: #2c3136; color: white; }
+.btn { cursor: pointer; border: none; border-radius: 8px; font-weight: bold; padding: 10px 20px; text-transform: uppercase; transition: 0.2s; }
+.btn:hover { opacity: 0.8; }
 .btn-guess { background: var(--primary); color: white; }
+.btn-giveup { background: var(--wrong); color: white; } 
 .btn-next { background: var(--correct); color: white; display: none; }
 .btn-mode { background: #555; color: white; margin-bottom: 10px; }
 
-/* Table */
 table { margin: 0 auto; border-spacing: 5px; width: 100%; max-width: 1200px; }
 td { padding: 15px 5px; font-size: 11px; font-weight: bold; border-radius: 5px; color: white; }
 .green { background: var(--correct); }
-.yellow { background: var(--partial); color: #000; } /* Partial match */
+.yellow { background: var(--partial); color: #000; }
 .red { background: var(--wrong); }
 
 #suggestions {
@@ -82,6 +82,7 @@ td { padding: 15px 5px; font-size: 11px; font-weight: bold; border-radius: 5px; 
     <input type="text" id="charSearch" placeholder="Enter English or Korean name..." autocomplete="off">
     <div id="suggestions"></div>
     <button class="btn btn-guess" onclick="makeGuess()">Guess</button>
+    <button class="btn btn-giveup" onclick="giveUp()">Give Up</button>
 </div>
 
 <div id="msg"></div>
@@ -103,7 +104,6 @@ td { padding: 15px 5px; font-size: 11px; font-weight: bold; border-radius: 5px; 
 </table>
 
 <script>
-// Logic: Former Affiliations add the "Yellow" partial match
 const characters = [
   {name:"Daniel Park / Park Hyung Suk", gen:"Gen 2", height:181, hometown:"Seoul", aff:"Allied", former:["Workers"], style:"Copy", age:19},
   {name:"Johan Seong / Seong Yo Han", gen:"Gen 2", height:179, hometown:"Seoul", aff:"None", former:["God Dog", "Big Deal", "Workers"], style:"Copy", age:19},
@@ -114,14 +114,78 @@ const characters = [
   {name:"Jake Kim / Kim Gi Myeong", gen:"Gen 2", height:194, hometown:"Seoul", aff:"Big Deal", former:["None"], style:"MMA", age:19},
   {name:"Gun Park / Jong Gun", gen:"Gen 1", height:190, hometown:"Tokyo", aff:"HNH Group", former:["Magami Family"], style:"Kyokushin", age:20},
   {name:"Vasco / Lee Eun Tae", gen:"Gen 2", height:183, hometown:"Seoul", aff:"Burn Knuckles", former:["Allied"], style:"Muay Thai", age:19},
-  {name:"Hudson Ahn / Ahn Hyun Sung", gen:"Gen 2", height:178, hometown:"Ansan", aff:"Allied", former:["Ansan"], style:"Punching", age:20}
-  // ... more characters follow the same structure
+  {name:"Hudson Ahn / Ahn Hyun Sung", gen:"Gen 2", height:178, hometown:"Ansan", aff:"Allied", former:["Ansan"], style:"Punching", age:20},
+  {name:"James Lee / Lee Ji Hoon", gen:"Gen 1", height:188, hometown:"Seoul", aff:"HNH Group", former:["None"], style:"IA", age:23},
+  {name:"Goo Kim / Kim Jun Goo", gen:"Gen 1", height:190, hometown:"Seoul", aff:"HNH Group", former:["None"], style:"Weapons", age:20},
+  {name:"Jay Hong / Hong Jae Yeol", gen:"Gen 2", height:184, hometown:"Seoul", aff:"Allied", former:["None"], style:"Systema", age:19},
+  {name:"Vin Jin / Jin Ho Bin", gen:"Gen 2", height:182, hometown:"Cheonliang", aff:"Allied", former:["Cheonliang"], style:"Kudo", age:19},
+  {name:"Mary Kim / Kim Mi Jin", gen:"Gen 2", height:165, hometown:"Cheonliang", aff:"Burn Knuckles", former:["Cheonliang"], style:"Judo", age:19},
+  {name:"Jerry Kwon / Kwon Ji Tae", gen:"Gen 2", height:198, hometown:"Seoul", aff:"Big Deal", former:["None"], style:"Boxing", age:19},
+  {name:"Lineman / Im Gyeong Buk", gen:"Gen 2", height:177, hometown:"Seoul", aff:"Big Deal", former:["None"], style:"Combat", age:19},
+  {name:"Warren Chae / Chae Won Seok", gen:"Gen 2", height:188, hometown:"Seoul", aff:"Hostel", former:["Workers"], style:"CQC", age:19},
+  {name:"Tom Lee / Lee Do Gyu", gen:"Gen 0", height:210, hometown:"Seoul", aff:"White Tiger", former:["Fist Gang"], style:"Wildness", age:48},
+  {name:"Charles Choi / Choi Dong Soo", gen:"Gen 0", height:185, hometown:"Seoul", aff:"HNH Group", former:["Fist Gang"], style:"IA", age:50},
+  {name:"Jincheol Park / Park Jin Cheol", gen:"Gen 0", height:192, hometown:"Seoul", aff:"Military", former:["None"], style:"CQC", age:40},
+  {name:"Hansu Seong / Seong Han Soo", gen:"Gen 0", height:181, hometown:"Seoul", aff:"Military", former:["None"], style:"Taekwondo", age:41},
+  {name:"Manager Kim / Kim Bu Jang", gen:"Gen 0", height:180, hometown:"Seoul", aff:"White Tiger", former:["Military"], style:"CQC", age:42},
+  {name:"Olly Wang / Wang Oh Chun", gen:"Gen 2", height:184, hometown:"Seoul", aff:"Hostel", former:["None"], style:"Free", age:19},
+  {name:"Mandeok Bang / Bang Man Deok", gen:"Gen 2", height:202, hometown:"Seoul", aff:"Workers", former:["None"], style:"Capoeira", age:20},
+  {name:"Yoosung / Yoo Sung", gen:"Gen 2", height:178, hometown:"Seoul", aff:"Workers", former:["None"], style:"Instinct", age:20},
+  {name:"Ryuhei Kuroda / Kuroda Ryuhei", gen:"Gen 2", height:183, hometown:"Kanto", aff:"Workers", former:["Magami Family"], style:"Brawling", age:20},
+  {name:"Xiaolung / Shaorong", gen:"Gen 2", height:190, hometown:"China", aff:"Workers", former:["Tieda"], style:"Staff", age:20},
+  {name:"Kenta Magami / Magami Kenta", gen:"Gen 2", height:172, hometown:"Japan", aff:"Workers", former:["Magami Family"], style:"Karate", age:19},
+  {name:"Jibeom Kwak / Kwak Ji Beom", gen:"Gen 2", height:188, hometown:"Chungcheong", aff:"Allied", former:["None"], style:"Chop", age:20},
+  {name:"Jihan Kwak / Kwak Ji Han", gen:"Gen 2", height:189, hometown:"Chungcheong", aff:"Allied", former:["None"], style:"Chop", age:20},
+  {name:"Jichang Kwak / Kwak Ji Chang", gen:"Gen 1", height:192, hometown:"Seoul", aff:"None", former:["Chungcheong"], style:"Chop", age:24},
+  {name:"Taesoo Ma / Ma Tae Soo", gen:"Gen 1", height:191, hometown:"Ansan", aff:"None", former:["None"], style:"Punching", age:24},
+  {name:"Gongseob Ji / Ji Gong Seob", gen:"Gen 1", height:187, hometown:"Daegu", aff:"None", former:["None"], style:"Boxing", age:24},
+  {name:"Seokdu Wang / Wang Seok Du", gen:"Gen 1", height:185, hometown:"Suwon", aff:"None", former:["None"], style:"Headbutt", age:25},
+  {name:"Jingyong Park / Park Jin Young", gen:"Gen 0", height:183, hometown:"Seoul", aff:"Workers", former:["Fist Gang"], style:"Copy", age:48},
+  {name:"Gapryong Kim / Kim Gap Ryong", gen:"Gen 0", height:195, hometown:"Seoul", aff:"None", former:["Fist Gang"], style:"MMA", age:50},
+  {name:"Logan Lee / Lee Tae Sung", gen:"Gen 2", height:192, hometown:"Seoul", aff:"Workers", former:["None"], style:"Jiu-Jitsu", age:19},
+  {name:"Crystal Choi / Choi Soo Jung", gen:"Gen 2", height:168, hometown:"Seoul", aff:"HNH Group", former:["None"], style:"Aikido", age:19},
+  {name:"Jiho Park / Park Ji Ho", gen:"Gen 2", height:171, hometown:"Seoul", aff:"None", former:["None"], style:"Dirty", age:19},
+  {name:"Duke Pyeon / Pyeon Deok Hwa", gen:"Gen 2", height:160, hometown:"Seoul", aff:"None", former:["None"], style:"None", age:19},
+  {name:"Jace Park / Park Bum Jae", gen:"Gen 2", height:187, hometown:"Seoul", aff:"Burn Knuckles", former:["None"], style:"Muay Thai", age:19},
+  {name:"Chuck Kwak / Kwak Paeng Gwi", gen:"Gen 2", height:184, hometown:"Seoul", aff:"Hostel", former:["None"], style:"MMA", age:21},
+  {name:"Justin Peng / Peng Gwan", gen:"Gen 2", height:185, hometown:"Seoul", aff:"Hostel", former:["None"], style:"MMA", age:21},
+  {name:"Max Kang / Kang Ju Chan", gen:"Gen 2", height:182, hometown:"Seoul", aff:"Hostel", former:["None"], style:"Wrestling", age:20},
+  {name:"Derek Han / Han Jae Hui", gen:"Gen 2", height:181, hometown:"Seoul", aff:"Hostel", former:["None"], style:"Wrestling", age:20},
+  {name:"Jacky Lee / Lee Jin Yong", gen:"Gen 2", height:179, hometown:"Ansan", aff:"Ansan", former:["None"], style:"Kickboxing", age:20},
+  {name:"Channing Choi / Choi Chang Won", gen:"Gen 2", height:184, hometown:"Ansan", aff:"Ansan", former:["None"], style:"Street", age:20},
+  {name:"Jason Yoon / Yoon Jae Hee", gen:"Gen 2", height:180, hometown:"Seoul", aff:"Big Deal", former:["None"], style:"Taekwondo", age:19},
+  {name:"Brad Lee / Lee Geon Woo", gen:"Gen 2", height:191, hometown:"Seoul", aff:"Big Deal", former:["None"], style:"Boxing", age:19},
+  {name:"Hangyeol Baek / Baek Han Gyeol", gen:"Gen 2", height:176, hometown:"Seoul", aff:"Workers", former:["None"], style:"Medical", age:22},
+  {name:"Taejin Cheon / Cheon Tae Jin", gen:"Gen 2", height:188, hometown:"Cheonliang", aff:"Workers", former:["None"], style:"Ssireum", age:21},
+  {name:"Beolgu Lee / Lee Beol Gu", gen:"Gen 1", height:178, hometown:"Seoul", aff:"None", former:["None"], style:"Lying", age:25},
+  {name:"Gwangnam Dokgo / Dokgo Gwang Nam", gen:"Gen 2", height:182, hometown:"Seoul", aff:"None", former:["None"], style:"Street", age:20},
+  {name:"Darius Hong / Hong Du Pyo", gen:"Gen 2", height:194, hometown:"Seoul", aff:"None", former:["None"], style:"Street", age:22},
+  {name:"Eunhyuk Lee / Lee Eun Hyeok", gen:"Gen 2", height:175, hometown:"Seoul", aff:"None", former:["None"], style:"Taekwondo", age:19},
+  {name:"Huseong Ha / Ha Hu Seong", gen:"Gen 2", height:186, hometown:"Seoul", aff:"Burn Knuckles", former:["None"], style:"Brawling", age:20},
+  {name:"Hyunmyeong Lee / Lee Hyun Myeong", gen:"Gen 2", height:177, hometown:"Seoul", aff:"None", former:["None"], style:"Boxing", age:19},
+  {name:"Jin Jang / Jang Jin", gen:"Gen 2", height:178, hometown:"Seoul", aff:"Workers", former:["God Dog"], style:"Analysis", age:20},
+  {name:"Koji / Ko Ji", gen:"Gen 2", height:168, hometown:"Seoul", aff:"HNH Group", former:["None"], style:"Hacking", age:17},
+  {name:"Leon Lee / Lee Rin", gen:"Gen 2", height:166, hometown:"Seoul", aff:"Burn Knuckles", former:["None"], style:"None", age:19},
+  {name:"Minwoo Kim / Kim Min Woo", gen:"Gen 2", height:181, hometown:"Seoul", aff:"None", former:["None"], style:"Dirty", age:19},
+  {name:"Namsoo Lee / Lee Nam Soo", gen:"Gen 2", height:170, hometown:"Seoul", aff:"None", former:["None"], style:"None", age:19},
+  {name:"Sally Park / Park Se Rim", gen:"Gen 2", height:164, hometown:"Seoul", aff:"Hostel", former:["None"], style:"None", age:19},
+  {name:"Scott Kwon / Kwon Seung Ryong", gen:"Gen 2", height:188, hometown:"Seoul", aff:"God Dog", former:["None"], style:"MMA", age:20},
+  {name:"Seth Lee / Lee Seung Han", gen:"Gen 2", height:185, hometown:"Seoul", aff:"None", former:["None"], style:"Brawling", age:21},
+  {name:"Taehun Seong / Seong Tae Hoon", gen:"Gen 2", height:181, hometown:"Seoul", aff:"None", former:["None"], style:"Taekwondo", age:19},
+  {name:"Vivi / Bee Bee", gen:"Gen 2", height:167, hometown:"China", aff:"Workers", former:["None"], style:"None", age:20},
+  {name:"Woochul Park / Park Woo Chul", gen:"Gen 2", height:180, hometown:"Seoul", aff:"None", former:["None"], style:"Boxing", age:19},
+  {name:"Yeonhui Kim / Kim Yeon Hui", gen:"Gen 2", height:163, hometown:"Seoul", aff:"Big Deal", former:["None"], style:"None", age:21},
+  {name:"Yui Kim / Kim Yui", gen:"Gen 2", height:165, hometown:"Seoul", aff:"None", former:["None"], style:"None", age:19},
+  {name:"Zeus / Je-U-Seu", gen:"Gen 2", height:189, hometown:"Seoul", aff:"None", former:["None"], style:"Wrestling", age:22},
+  {name:"Gitae Kim / Kim Gi Tae", gen:"Gen 1", height:196, hometown:"Seoul", aff:"Mexico", former:["None"], style:"Free", age:26},
+  {name:"Elite / Choi Dong Soo", gen:"Gen 0", height:185, hometown:"Seoul", aff:"HNH Group", former:["Fist Gang"], style:"IA", age:52}
 ];
 
 let streak = localStorage.getItem("lookism_streak") || 0;
 let isBossMode = localStorage.getItem("lookism_mode") === "boss";
 let guessesLeft = 5;
 let gameActive = true;
+let guessedNames = [];
 const answer = characters[Math.floor(Math.random() * characters.length)];
 
 document.getElementById("streakVal").textContent = streak;
@@ -152,12 +216,17 @@ input.oninput = () => {
     const val = input.value.toLowerCase();
     sugBox.innerHTML = "";
     if(!val) { sugBox.style.display = "none"; return; }
-    const filtered = characters.filter(c => c.name.toLowerCase().includes(val));
+    
+    const filtered = characters.filter(c => 
+        c.name.toLowerCase().includes(val) && 
+        !guessedNames.includes(c.name)
+    );
+
     filtered.forEach(c => {
         const d = document.createElement("div");
         d.className = "sug-item";
         d.textContent = c.name;
-        d.onclick = () => { input.value = c.name; sugBox.style.display = "none"; };
+        d.onclick = () => { input.value = c.name; sugBox.style.display = "none"; makeGuess(); };
         sugBox.appendChild(d);
     });
     sugBox.style.display = filtered.length ? "block" : "none";
@@ -165,12 +234,18 @@ input.oninput = () => {
 
 function makeGuess() {
     if(!gameActive) return;
+    
     const g = characters.find(c => c.name.toLowerCase() === input.value.toLowerCase());
+    
     if(!g) return;
+    if(guessedNames.includes(g.name)) {
+        input.value = "";
+        return;
+    }
 
+    guessedNames.push(g.name);
     const row = document.getElementById("tableBody").insertRow(0);
     
-    // Check Affiliation for Partial Match (Yellow)
     let affClass = "red";
     if (g.aff === answer.aff) affClass = "green";
     else if (answer.former.includes(g.aff) || g.former.includes(answer.aff)) affClass = "yellow";
@@ -194,6 +269,13 @@ function makeGuess() {
     }
 }
 
+function giveUp() {
+    if(!gameActive) return;
+    if(confirm("Are you sure you want to give up? Streak will be reset.")) {
+        loseGame();
+    }
+}
+
 function winGame() {
     gameActive = false;
     streak++;
@@ -207,6 +289,7 @@ function loseGame() {
     localStorage.setItem("lookism_streak", 0);
     document.getElementById("msg").innerHTML = `<h2 style="color:var(--danger)">FAILED! It was ${answer.name}</h2>`;
     document.getElementById("nextBtn").style.display = "inline-block";
+    input.disabled = true;
 }
 
 function addCell(row, val, cls) {
@@ -223,4 +306,4 @@ function addComparisonCell(row, val, target, unit) {
 }
 </script>
 </body>
-</html>
+  </html>
