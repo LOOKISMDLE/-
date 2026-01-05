@@ -25,7 +25,8 @@ body {
 }
 
 .header-box { padding: 20px; background: var(--surface); border-bottom: 3px solid var(--primary); margin-bottom: 20px; }
-.streak-tag { color: var(--partial); font-weight: 800; font-size: 1.2rem; margin-bottom: 5px; }
+.streak-container { display: flex; justify-content: center; gap: 20px; flex-wrap: wrap; margin-bottom: 10px; }
+.streak-tag { font-weight: 800; font-size: 1rem; }
 .mode-indicator { 
     display: inline-block; 
     padding: 5px 15px; 
@@ -72,13 +73,16 @@ td { padding: 15px 5px; font-size: 11px; font-weight: bold; border-radius: 5px; 
 <body>
 
 <div class="header-box">
-    <div class="streak-tag">🔥 INFINITE STREAK: <span id="streakVal">0</span></div>
-    <div class="streak-tag" style="color: #9b59b6;">📅 DAILY STREAK: <span id="dailyStreakVal">0</span></div>
+    <div class="streak-container">
+        <div class="streak-tag" style="color: #9b59b6;">📅 DAILY: <span id="dailyStreakVal">0</span></div>
+        <div class="streak-tag" style="color: var(--danger);">💀 BOSS: <span id="bossStreakVal">0</span></div>
+        <div class="streak-tag" style="color: var(--partial);">♾️ INFINITE: <span id="streakVal">0</span></div>
+    </div>
     <h1>LOOKISMDLE</h1>
     <div>
-        <button class="btn btn-mode" onclick="setMode('classic')">Infinite Mode</button>
-        <button class="btn btn-mode" onclick="setMode('boss')">Boss Rush</button>
         <button class="btn btn-mode" onclick="setMode('daily')">Daily Mode</button>
+        <button class="btn btn-mode" onclick="setMode('boss')">Boss Rush</button>
+        <button class="btn btn-mode" onclick="setMode('classic')">Infinite Mode</button>
     </div>
     <div id="modeTag" class="mode-indicator">Mode</div>
     <div id="timer-box">Next Daily in: <span id="timerVal">00:00:00</span></div>
@@ -182,30 +186,36 @@ const characters = [
   {name:"Elite / Choi Dong Soo", gen:"Gen 0", height:185, hometown:"Seoul", aff:"HNH Group", former:["Fist Gang"], style:"IA", age:52}
 ];
 
-let mode = localStorage.getItem("lookism_mode") || "classic";
+let mode = localStorage.getItem("lookism_mode") || "daily";
 let streak = parseInt(localStorage.getItem("lookism_streak") || 0);
 let dailyStreak = parseInt(localStorage.getItem("lookism_daily_streak") || 0);
+let bossStreak = parseInt(localStorage.getItem("lookism_boss_streak") || 0);
 let gameActive = true;
 let guessedNames = [];
 let guessesLeft = 5;
 
+// Daily Logic Persistence
+const todayStr = new Date().toDateString();
+const dailyDataKey = "lookism_daily_guesses_" + todayStr;
+
 function getDailyAnswer() {
-    const today = new Date().toDateString();
     let hash = 0;
-    for (let i = 0; i < today.length; i++) {
-        hash = ((hash << 5) - hash) + today.charCodeAt(i);
+    for (let i = 0; i < todayStr.length; i++) {
+        hash = ((hash << 5) - hash) + todayStr.charCodeAt(i);
         hash |= 0;
     }
-    const index = Math.abs(hash) % characters.length;
-    return characters[index];
+    return characters[Math.abs(hash) % characters.length];
 }
 
 const answer = (mode === "daily") ? getDailyAnswer() : characters[Math.floor(Math.random() * characters.length)];
 
 document.getElementById("streakVal").textContent = streak;
 document.getElementById("dailyStreakVal").textContent = dailyStreak;
+document.getElementById("bossStreakVal").textContent = bossStreak;
+
 updateUI();
 startTimer();
+loadDailyProgress();
 
 function setMode(m) {
     localStorage.setItem("lookism_mode", m);
@@ -218,11 +228,9 @@ function startTimer() {
         const nextDay = new Date();
         nextDay.setHours(24, 0, 0, 0);
         const diff = nextDay - now;
-
         const h = Math.floor(diff / 3600000).toString().padStart(2, '0');
         const m = Math.floor((diff % 3600000) / 60000).toString().padStart(2, '0');
         const s = Math.floor((diff % 60000) / 1000).toString().padStart(2, '0');
-
         document.getElementById("timerVal").textContent = `${h}:${m}:${s}`;
     }
     updateTimer();
@@ -244,11 +252,26 @@ function updateUI() {
         tag.className = "mode-indicator daily-mode";
         timerBox.style.display = "block";
         counter.style.display = "none";
-        nextBtn.textContent = "Come Back Tomorrow";
+        nextBtn.textContent = "Next Daily in " + document.getElementById("timerVal").textContent;
     } else {
         tag.textContent = "INFINITE MODE (Unlimited)";
         tag.className = "mode-indicator";
         counter.style.display = "none";
+    }
+}
+
+function loadDailyProgress() {
+    if (mode !== "daily") return;
+    const saved = JSON.parse(localStorage.getItem(dailyDataKey) || "[]");
+    saved.forEach(name => {
+        const char = characters.find(c => c.name === name);
+        if (char) renderGuessRow(char);
+    });
+    // If last guess was correct, lock the game
+    if (saved.includes(answer.name)) {
+        gameActive = false;
+        document.getElementById("msg").innerHTML = `<h2 style="color:var(--correct)">DAILY COMPLETE!</h2>`;
+        document.getElementById("charSearch").disabled = true;
     }
 }
 
@@ -259,7 +282,7 @@ input.oninput = () => {
     const val = input.value.toLowerCase();
     sugBox.innerHTML = "";
     if(!val) { sugBox.style.display = "none"; return; }
-    const filtered = characters.filter(c => c.name.toLowerCase().includes(val) && !guessedNames.includes(c.name));
+    const filtered = characters.filter(c => (c.name.toLowerCase().includes(val)) && !guessedNames.includes(c.name));
     filtered.forEach(c => {
         const d = document.createElement("div");
         d.className = "sug-item";
@@ -275,6 +298,25 @@ function makeGuess() {
     const g = characters.find(c => c.name.toLowerCase() === input.value.toLowerCase());
     if(!g || guessedNames.includes(g.name)) { input.value = ""; return; }
 
+    renderGuessRow(g);
+    
+    // Save Daily Guesses
+    if (mode === "daily") {
+        const currentGuesses = JSON.parse(localStorage.getItem(dailyDataKey) || "[]");
+        currentGuesses.push(g.name);
+        localStorage.setItem(dailyDataKey, JSON.stringify(currentGuesses));
+    }
+
+    input.value = "";
+    if(g.name === answer.name) winGame();
+    else if(mode === "boss") {
+        guessesLeft--;
+        document.getElementById("countVal").textContent = guessesLeft;
+        if(guessesLeft <= 0) loseGame();
+    }
+}
+
+function renderGuessRow(g) {
     guessedNames.push(g.name);
     const row = document.getElementById("tableBody").insertRow(0);
     let affClass = (g.aff === answer.aff) ? "green" : (answer.former.includes(g.aff) || g.former.includes(answer.aff) ? "yellow" : "red");
@@ -286,14 +328,6 @@ function makeGuess() {
     addCell(row, g.aff, affClass);
     addCell(row, g.style, g.style === answer.style ? "green" : "red");
     addComparisonCell(row, g.age, answer.age, "");
-
-    input.value = "";
-    if(g.name === answer.name) winGame();
-    else if(mode === "boss") {
-        guessesLeft--;
-        document.getElementById("countVal").textContent = guessesLeft;
-        if(guessesLeft <= 0) loseGame();
-    }
 }
 
 function giveUp() {
@@ -303,41 +337,4 @@ function giveUp() {
 
 function winGame() {
     gameActive = false;
-    if(mode === "daily") {
-        dailyStreak++;
-        localStorage.setItem("lookism_daily_streak", dailyStreak);
-    } else {
-        streak++;
-        localStorage.setItem("lookism_streak", streak);
-    }
-    document.getElementById("msg").innerHTML = `<h2 style="color:var(--correct)">VICTORY!</h2>`;
-    document.getElementById("nextBtn").style.display = mode === "daily" ? "none" : "inline-block";
-}
-
-function loseGame() {
-    gameActive = false;
-    if(mode === "daily") {
-        localStorage.setItem("lookism_daily_streak", 0);
-    } else {
-        localStorage.setItem("lookism_streak", 0);
-    }
-    document.getElementById("msg").innerHTML = `<h2 style="color:var(--danger)">FAILED! It was ${answer.name}</h2>`;
-    document.getElementById("nextBtn").style.display = mode === "daily" ? "none" : "inline-block";
-    input.disabled = true;
-}
-
-function addCell(row, val, cls) {
-    const c = row.insertCell();
-    c.textContent = val;
-    c.className = cls;
-}
-
-function addComparisonCell(row, val, target, unit) {
-    const c = row.insertCell();
-    const arrow = val < target ? " ↑" : (val > target ? " ↓" : "");
-    c.textContent = val + unit + arrow;
-    c.className = val === target ? "green" : "red";
-}
-</script>
-</body>
-      </html>
+    if(mode === "daily"
